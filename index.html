@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TruthLens — Fake News Detector | NOUN</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green-deep: #0a4a2e;
+    --green-mid: #1a7a4a;
+    --green-bright: #22c55e;
+    --green-light: #bbf7d0;
+    --green-pale: #f0fdf4;
+    --white: #ffffff;
+    --off-white: #f8fffe;
+    --gray-soft: #e8f5ee;
+    --gray-text: #374151;
+    --gray-muted: #6b7280;
+    --gold: #d4af37;
+    --red-alert: #dc2626;
+    --orange-warn: #ea580c;
+    --radius: 18px;
+    --shadow: 0 20px 60px rgba(10,74,46,0.13);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--gray-text); min-height: 100vh; overflow-x: hidden; }
+
+  .bg-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 80% 60% at 10% 0%, rgba(34,197,94,0.10) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 90% 100%, rgba(10,74,46,0.08) 0%, transparent 55%), var(--off-white); }
+  .bg-dots { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.35; background-image: radial-gradient(circle, #22c55e 1px, transparent 1px); background-size: 36px 36px; mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%); }
+
+  header { position: relative; z-index: 10; background: var(--green-deep); padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; height: 72px; box-shadow: 0 4px 32px rgba(0,0,0,0.18); }
+  .logo-group { display: flex; align-items: center; gap: 14px; }
+  .noun-badge { width: 46px; height: 46px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 15px; color: var(--green-deep); box-shadow: 0 0 0 3px rgba(212,175,55,0.3); flex-shrink: 0; }
+  .logo-text { color: var(--white); }
+  .logo-text h1 { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 700; line-height: 1.1; }
+  .logo-text span { font-size: 0.68rem; color: var(--green-light); letter-spacing: 0.8px; text-transform: uppercase; }
+  .header-tag { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--green-light); border: 1px solid rgba(187,247,208,0.35); padding: 4px 12px; border-radius: 100px; }
+
+  .hero { position: relative; z-index: 2; text-align: center; padding: 80px 5vw 40px; }
+  .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: var(--green-pale); border: 1.5px solid var(--green-light); border-radius: 100px; padding: 6px 18px; font-size: 0.75rem; font-weight: 600; color: var(--green-mid); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 24px; animation: fadeSlideDown 0.6s ease both; }
+  .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-bright); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+  .hero h2 { font-family: 'Playfair Display', serif; font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 900; line-height: 1.08; color: var(--green-deep); margin-bottom: 18px; animation: fadeSlideDown 0.7s 0.1s ease both; }
+  .hero h2 em { font-style: normal; color: var(--green-mid); text-decoration: underline; text-decoration-color: var(--green-bright); text-underline-offset: 6px; }
+  .hero-sub { max-width: 560px; margin: 0 auto 42px; font-size: 1.05rem; color: var(--gray-muted); line-height: 1.7; animation: fadeSlideDown 0.8s 0.2s ease both; }
+  @keyframes fadeSlideDown { from{opacity:0;transform:translateY(-18px)} to{opacity:1;transform:translateY(0)} }
+
+  /* API STATUS BANNER */
+  .api-config-banner { position: relative; z-index: 3; max-width: 780px; margin: 0 auto 16px; background: #fef3c7; border: 1.5px solid #f59e0b; border-radius: 14px; padding: 14px 20px; display: flex; align-items: flex-start; gap: 12px; animation: fadeSlideUp 0.5s ease both; }
+  .api-config-banner.hidden { display: none; }
+  .api-config-banner .ab-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .api-config-banner .ab-text { font-size: 0.82rem; color: #92400e; line-height: 1.5; }
+  .api-config-banner .ab-text strong { font-weight: 700; }
+  .api-config-banner input { margin-top: 8px; width: 100%; padding: 8px 12px; border: 1.5px solid #f59e0b; border-radius: 8px; font-size: 0.82rem; font-family: 'Space Mono', monospace; outline: none; background: white; }
+  .api-config-banner input:focus { border-color: var(--green-mid); }
+  .ab-save-btn { margin-top: 8px; padding: 7px 18px; background: var(--green-deep); color: white; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+
+  .detector-card { position: relative; z-index: 3; max-width: 780px; margin: 0 auto 60px; background: var(--white); border-radius: 28px; box-shadow: var(--shadow); border: 1.5px solid rgba(34,197,94,0.14); overflow: hidden; animation: fadeSlideUp 0.9s 0.3s ease both; }
+  @keyframes fadeSlideUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+  .card-top-bar { background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-mid) 100%); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .card-top-bar h3 { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; color: var(--white); }
+  .card-top-bar span { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--green-light); background: rgba(255,255,255,0.08); padding: 4px 12px; border-radius: 100px; }
+  .card-body { padding: 32px 36px 36px; }
+
+  .input-tabs { display: flex; gap: 4px; background: var(--gray-soft); border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+  .tab-btn { flex: 1; padding: 10px; border: none; cursor: pointer; border-radius: 9px; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; color: var(--gray-muted); transition: all 0.25s; }
+  .tab-btn.active { background: var(--white); color: var(--green-deep); box-shadow: 0 2px 12px rgba(10,74,46,0.10); font-weight: 600; }
+  .input-panel { display: none; }
+  .input-panel.visible { display: block; }
+  textarea, input[type="url"] { width: 100%; padding: 16px 18px; border: 2px solid var(--gray-soft); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--gray-text); resize: none; outline: none; transition: border-color 0.25s, box-shadow 0.25s; background: var(--off-white); line-height: 1.6; }
+  textarea { height: 150px; }
+  textarea:focus, input[type="url"]:focus { border-color: var(--green-bright); box-shadow: 0 0 0 4px rgba(34,197,94,0.12); background: var(--white); }
+  .char-counter { text-align: right; margin-top: 6px; font-size: 0.75rem; color: var(--gray-muted); font-family: 'Space Mono', monospace; }
+
+  .analyze-btn { width: 100%; padding: 17px; background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-mid) 100%); color: var(--white); border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; overflow: hidden; }
+  .analyze-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--green-mid), var(--green-bright)); opacity: 0; transition: opacity 0.3s; }
+  .analyze-btn:hover::before { opacity: 1; }
+  .analyze-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(10,74,46,0.3); }
+  .analyze-btn span, .btn-icon { position: relative; z-index: 1; }
+
+  /* LOADING */
+  #loading-section { display: none; position: relative; z-index: 3; max-width: 780px; margin: 0 auto 60px; background: var(--white); border-radius: 28px; box-shadow: var(--shadow); border: 1.5px solid rgba(34,197,94,0.14); padding: 56px 36px; text-align: center; }
+  .scanning-visual { width: 90px; height: 90px; margin: 0 auto 28px; position: relative; }
+  .scan-ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; animation: spinRing 1.2s linear infinite; }
+  .scan-ring:nth-child(1) { border-top-color: var(--green-bright); border-right-color: var(--green-bright); }
+  .scan-ring:nth-child(2) { inset: 12px; border-bottom-color: var(--green-mid); border-left-color: var(--green-mid); animation-direction: reverse; animation-duration: 0.9s; }
+  .scan-ring:nth-child(3) { inset: 24px; border-top-color: var(--gold); animation-duration: 1.5s; }
+  .scan-core { position: absolute; inset: 34px; border-radius: 50%; background: var(--green-pale); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  @keyframes spinRing { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  .loading-label { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: var(--green-deep); margin-bottom: 6px; }
+  .loading-sub { font-size: 0.88rem; color: var(--gray-muted); margin-bottom: 24px; }
+  .loading-steps { list-style: none; margin: 0 auto; max-width: 320px; text-align: left; }
+  .loading-steps li { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 0.88rem; color: var(--gray-muted); border-bottom: 1px solid var(--gray-soft); transition: color 0.4s; }
+  .loading-steps li:last-child { border-bottom: none; }
+  .step-icon { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; background: var(--gray-soft); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; transition: background 0.4s; }
+  .loading-steps li.done { color: var(--green-mid); }
+  .loading-steps li.done .step-icon { background: var(--green-bright); }
+  .loading-steps li.active { color: var(--green-deep); font-weight: 600; }
+  .loading-steps li.active .step-icon { background: var(--gold); animation: pulse 1s infinite; }
+
+  /* RESULT */
+  #result-section { display: none; position: relative; z-index: 3; max-width: 780px; margin: 0 auto 60px; animation: fadeSlideUp 0.6s ease both; }
+  .verdict-banner { border-radius: 24px 24px 0 0; padding: 36px 40px; position: relative; overflow: hidden; display: flex; align-items: flex-start; gap: 24px; }
+  .verdict-banner.real { background: linear-gradient(135deg, var(--green-deep) 0%, #155e3b 100%); }
+  .verdict-banner.fake { background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); }
+  .verdict-banner.mixed { background: linear-gradient(135deg, #78350f 0%, #92400e 100%); }
+  .verdict-banner::after { content: ''; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+  .verdict-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0; }
+  .verdict-text h3 { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+  .verdict-text h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 900; color: var(--white); line-height: 1.1; margin-bottom: 10px; }
+  .verdict-text p { font-size: 0.9rem; color: rgba(255,255,255,0.8); line-height: 1.6; }
+
+  .confidence-bar-wrap { background: var(--white); padding: 24px 40px; border-left: 1.5px solid var(--gray-soft); border-right: 1.5px solid var(--gray-soft); display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .conf-label { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--gray-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .conf-track { flex: 1; min-width: 180px; height: 8px; background: var(--gray-soft); border-radius: 100px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--green-bright), var(--green-mid)); transition: width 1.2s cubic-bezier(0.22,1,0.36,1); width: 0%; }
+  .conf-fill.danger { background: linear-gradient(90deg, #f87171, #dc2626); }
+  .conf-fill.mixed { background: linear-gradient(90deg, #fb923c, #ea580c); }
+  .conf-score { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--green-deep); white-space: nowrap; }
+  .conf-score.danger { color: var(--red-alert); }
+  .conf-score.mixed { color: var(--orange-warn); }
+
+  .result-body { background: var(--white); border: 1.5px solid var(--gray-soft); border-top: none; border-radius: 0 0 24px 24px; padding: 32px 40px 40px; }
+  .result-body h4 { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; color: var(--green-deep); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .result-body h4::before { content: ''; display: inline-block; width: 4px; height: 18px; background: var(--green-bright); border-radius: 2px; }
+  #analysis-text { font-size: 0.93rem; line-height: 1.85; color: var(--gray-text); background: var(--green-pale); padding: 20px 22px; border-radius: 14px; border-left: 4px solid var(--green-bright); margin-bottom: 28px; white-space: pre-wrap; }
+  .signals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .signal-card { background: var(--off-white); border: 1.5px solid var(--gray-soft); border-radius: 14px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px; }
+  .signal-card .s-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+  .signal-card .s-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-muted); margin-bottom: 2px; }
+  .signal-card .s-val { font-size: 0.88rem; font-weight: 600; color: var(--gray-text); }
+  .signal-card .s-val.pos { color: var(--green-mid); }
+  .signal-card .s-val.neg { color: var(--red-alert); }
+  .signal-card .s-val.neu { color: var(--orange-warn); }
+
+  .try-again-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border: 2px solid var(--green-bright); border-radius: var(--radius); background: transparent; color: var(--green-mid); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.25s; }
+  .try-again-btn:hover { background: var(--green-pale); transform: translateY(-2px); }
+
+  /* PROBS ROW */
+  .prob-row { display: flex; gap: 12px; margin-bottom: 20px; }
+  .prob-card { flex: 1; background: var(--off-white); border: 1.5px solid var(--gray-soft); border-radius: 14px; padding: 14px 16px; text-align: center; }
+  .prob-card .p-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-muted); margin-bottom: 4px; }
+  .prob-card .p-val { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; }
+  .prob-card.real .p-val { color: var(--green-mid); }
+  .prob-card.fake .p-val { color: var(--red-alert); }
+
+  .info-row { position: relative; z-index: 2; max-width: 780px; margin: 0 auto 40px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .info-card { background: var(--white); border-radius: 18px; padding: 22px 20px; border: 1.5px solid rgba(34,197,94,0.12); box-shadow: 0 4px 20px rgba(10,74,46,0.06); text-align: center; transition: transform 0.25s, box-shadow 0.25s; }
+  .info-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+  .info-card .ic-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+  .info-card h4 { font-family: 'Playfair Display', serif; font-size: 0.95rem; font-weight: 700; color: var(--green-deep); margin-bottom: 5px; }
+  .info-card p { font-size: 0.78rem; color: var(--gray-muted); line-height: 1.55; }
+
+  footer { position: relative; z-index: 2; background: var(--green-deep); padding: 40px 5vw 28px; text-align: center; }
+  footer .foot-logo { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 900; color: var(--white); margin-bottom: 4px; }
+  footer .foot-sub { font-size: 0.72rem; color: var(--green-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; }
+  .foot-credits { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; margin-bottom: 20px; }
+  .foot-credits p { font-size: 0.83rem; color: rgba(255,255,255,0.75); }
+  .foot-credits a { color: var(--green-bright); text-decoration: none; font-weight: 600; transition: color 0.2s; }
+  .foot-credits a:hover { color: var(--gold); text-decoration: underline; }
+  .divider-line { width: 60px; height: 2px; background: rgba(255,255,255,0.12); margin: 0 auto 16px; border-radius: 2px; }
+  footer .foot-copy { font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--green-deep); color: var(--white); padding: 12px 24px; border-radius: 100px; font-size: 0.85rem; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,0.25); z-index: 999; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1); white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 640px) {
+    .card-body { padding: 22px 20px 26px; }
+    .result-body { padding: 24px 22px 28px; }
+    .verdict-banner { padding: 28px 24px; flex-direction: column; }
+    .confidence-bar-wrap { padding: 18px 24px; }
+    .info-row { grid-template-columns: 1fr; }
+    .signals-grid { grid-template-columns: 1fr 1fr; }
+    .prob-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="bg-dots"></div>
+
+<header>
+  <div class="logo-group">
+    <div class="noun-badge">NOUN</div>
+    <div class="logo-text">
+      <h1>TruthLens</h1>
+      <span>National Open University of Nigeria</span>
+    </div>
+  </div>
+  <div class="header-tag">AI-Powered Verification</div>
+</header>
+
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span class="eyebrow-dot"></span>
+    Research Project · NOUN 2025
+  </div>
+  <h2>Can You Trust<br/><em>What You Read?</em></h2>
+  <p class="hero-sub">Paste any news headline or article below. Our custom-trained AI model analyses linguistic patterns, emotional triggers, and credibility signals to determine its authenticity.</p>
+</section>
+
+<!-- API Config Banner -->
+<div class="api-config-banner" id="api-banner">
+  <div class="ab-icon">⚙️</div>
+  <div class="ab-text" style="flex:1">
+    <strong>Set your Hugging Face Space URL</strong><br/>
+    After deploying your model on HF Spaces, paste the API URL below. Format: <code>https://your-username-truthlens-api.hf.space</code>
+    <br/>
+    <input type="url" id="hf-url-input" placeholder="https://your-username-truthlens-api.hf.space" />
+    <button class="ab-save-btn" onclick="saveApiUrl()">Save & Continue</button>
+  </div>
+</div>
+
+<!-- DETECTOR CARD -->
+<div id="detector-card" class="detector-card">
+  <div class="card-top-bar">
+    <h3>🔍 News Analysis Engine</h3>
+    <span>Your Trained Model · NOUN Research</span>
+  </div>
+  <div class="card-body">
+    <div class="input-tabs">
+      <button class="tab-btn active" onclick="switchTab('text')">📝 Paste Text / Headline</button>
+      <button class="tab-btn" onclick="switchTab('url')">🔗 Enter Article URL</button>
+    </div>
+    <div id="tab-text" class="input-panel visible">
+      <textarea id="article-text" placeholder="Paste your news headline or article here…" oninput="countChars(this)"></textarea>
+      <div class="char-counter" id="char-count">0 / 5000 characters</div>
+    </div>
+    <div id="tab-url" class="input-panel">
+      <input type="url" id="article-url" placeholder="https://example.com/news-article" />
+      <div style="margin-top:8px; font-size:0.78rem; color:var(--gray-muted);">We'll use the URL as context for analysis.</div>
+    </div>
+    <div style="height:18px;"></div>
+    <button class="analyze-btn" onclick="analyzeNews()">
+      <span class="btn-icon">⚡</span>
+      <span>Analyse for Fake News</span>
+    </button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-section">
+  <div class="scanning-visual">
+    <div class="scan-ring"></div>
+    <div class="scan-ring"></div>
+    <div class="scan-ring"></div>
+    <div class="scan-core">🔍</div>
+  </div>
+  <div class="loading-label">Analysing Content…</div>
+  <div class="loading-sub">Our AI model is examining your article</div>
+  <ul class="loading-steps" id="loading-steps">
+    <li id="step1"><div class="step-icon">→</div> Tokenising text</li>
+    <li id="step2"><div class="step-icon">→</div> Running DistilBERT inference</li>
+    <li id="step3"><div class="step-icon">→</div> Detecting emotional patterns</li>
+    <li id="step4"><div class="step-icon">→</div> Scoring credibility signals</li>
+    <li id="step5"><div class="step-icon">→</div> Generating explanation</li>
+  </ul>
+</div>
+
+<!-- RESULT -->
+<div id="result-section">
+  <div class="verdict-banner" id="verdict-banner">
+    <div class="verdict-icon" id="verdict-icon">✅</div>
+    <div class="verdict-text">
+      <h3>Verdict</h3>
+      <h2 id="verdict-title">Likely Authentic</h2>
+      <p id="verdict-subtitle">This content shows strong indicators of credibility.</p>
+    </div>
+  </div>
+  <div class="confidence-bar-wrap">
+    <span class="conf-label">Confidence Level</span>
+    <div class="conf-track"><div class="conf-fill" id="conf-fill"></div></div>
+    <span class="conf-score" id="conf-score">0%</span>
+  </div>
+  <div class="result-body">
+    <h4>Probability Breakdown</h4>
+    <div class="prob-row">
+      <div class="prob-card real"><div class="p-label">Real News Probability</div><div class="p-val" id="real-prob">—</div></div>
+      <div class="prob-card fake"><div class="p-label">Fake News Probability</div><div class="p-val" id="fake-prob">—</div></div>
+    </div>
+    <h4>Detailed Analysis</h4>
+    <div id="analysis-text"></div>
+    <h4>Signal Breakdown</h4>
+    <div class="signals-grid" id="signals-grid"></div>
+    <button class="try-again-btn" onclick="resetForm()">↩ Analyse Another Article</button>
+  </div>
+</div>
+
+<!-- INFO CARDS -->
+<div class="info-row">
+  <div class="info-card"><span class="ic-icon">🧠</span><h4>Custom Trained AI</h4><p>Model fine-tuned on 10,000+ verified real and fake news articles using DistilBERT architecture.</p></div>
+  <div class="info-card"><span class="ic-icon">📊</span><h4>Multi-Signal Analysis</h4><p>Evaluates tone, punctuation, source attribution, clickbait patterns, and AI confidence scores.</p></div>
+  <div class="info-card"><span class="ic-icon">🎓</span><h4>Academic Research</h4><p>Built as part of a postgraduate research project at the National Open University of Nigeria.</p></div>
+</div>
+
+<footer>
+  <div class="foot-logo">TruthLens</div>
+  <div class="foot-sub">Fake News Detection System · NOUN Research Project</div>
+  <div class="foot-credits">
+    <p>Developed by <a href="https://linktr.ee/jabirmuhamm" target="_blank" rel="noopener">Jabir Muhammad Kabir</a></p>
+    <p>Supervised by <a href="https://linktr.ee/drojeniyi" target="_blank" rel="noopener">Dr. Ojeniyi Adebayo</a></p>
+  </div>
+  <div class="divider-line"></div>
+  <div class="foot-copy">© 2025 National Open University of Nigeria · All rights reserved</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── API URL ─────────────────────────────────────────────────────
+  let API_BASE = 'https://jabirkabir-truthlens-api.hf.space';
+
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('api-banner').classList.add('hidden');
+  });
+
+  function saveApiUrl() {}
+
+  // ── Tabs ─────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='text')||(i===1&&tab==='url')));
+    document.getElementById('tab-text').classList.toggle('visible', tab==='text');
+    document.getElementById('tab-url').classList.toggle('visible', tab==='url');
+  }
+
+  function countChars(el) {
+    const n = el.value.length;
+    document.getElementById('char-count').textContent = n + ' / 5000 characters';
+    if (n > 5000) el.value = el.value.slice(0, 5000);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── Loading Steps ────────────────────────────────────────────────
+  const stepIds = ['step1','step2','step3','step4','step5'];
+  function animateSteps(cb) {
+    let i = 0;
+    stepIds.forEach(id => { const el = document.getElementById(id); el.className=''; el.querySelector('.step-icon').textContent='→'; });
+    const iv = setInterval(() => {
+      if (i > 0) { const p = document.getElementById(stepIds[i-1]); p.classList.remove('active'); p.classList.add('done'); p.querySelector('.step-icon').textContent='✓'; }
+      if (i < stepIds.length) { document.getElementById(stepIds[i]).classList.add('active'); i++; }
+      else { clearInterval(iv); setTimeout(cb, 400); }
+    }, 600);
+  }
+
+  // ── Main Analyse ─────────────────────────────────────────────────
+  async function analyzeNews() {
+    if (!API_BASE) {
+      document.getElementById('api-banner').classList.remove('hidden');
+      document.getElementById('api-banner').scrollIntoView({behavior:'smooth'});
+      showToast('⚠️ Please set your HF Space URL first');
+      return;
+    }
+
+    const activeTab = document.querySelector('.tab-btn.active').textContent.includes('Text') ? 'text' : 'url';
+    const content = activeTab === 'text'
+      ? document.getElementById('article-text').value.trim()
+      : document.getElementById('article-url').value.trim();
+
+    if (!content || content.length < 15) { showToast('⚠️ Please enter more text for analysis.'); return; }
+
+    document.getElementById('detector-card').style.display = 'none';
+    document.getElementById('result-section').style.display = 'none';
+    document.getElementById('loading-section').style.display = 'block';
+
+    let apiDone = false, stepsDone = false, apiResult = null;
+    animateSteps(() => { stepsDone = true; if (apiDone) showResult(apiResult); });
+
+    try {
+      const res = await fetch(`${API_BASE}/analyse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content.slice(0, 4000) })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      apiResult = await res.json();
+    } catch (err) {
+      console.error(err);
+      apiResult = {
+        verdict: 'MIXED', confidence: 55,
+        verdict_title: 'Connection Error',
+        verdict_subtitle: 'Could not reach the analysis API. Please check your HF Space URL.',
+        analysis: `Unable to connect to the API at: ${API_BASE}\n\nPlease make sure:\n1. Your HF Space is running (not sleeping)\n2. The URL is correct\n3. Your internet connection is active\n\nTip: HF Spaces "sleep" after inactivity. Visit the Space URL directly to wake it up, then try again.`,
+        signals: [
+          {icon:'🌐',label:'Connection',value:'API unreachable',type:'neg'},
+          {icon:'💤',label:'HF Space',value:'May be sleeping',type:'neu'},
+          {icon:'🔗',label:'URL',value:'Check configuration',type:'neu'},
+          {icon:'🔁',label:'Action',value:'Wake Space & retry',type:'neu'},
+          {icon:'📡',label:'Network',value:'Check connection',type:'neu'},
+          {icon:'⚙️',label:'Setup',value:'Verify deployment',type:'neu'}
+        ],
+        real_probability: 0, fake_probability: 0
+      };
+    }
+
+    apiDone = true;
+    if (stepsDone) showResult(apiResult);
+  }
+
+  function showResult(data) {
+    document.getElementById('loading-section').style.display = 'none';
+    const rs = document.getElementById('result-section');
+    rs.style.display = 'block';
+
+    const banner = document.getElementById('verdict-banner');
+    banner.className = 'verdict-banner';
+    const v = (data.verdict || 'MIXED').toUpperCase();
+
+    if (v === 'REAL') {
+      banner.classList.add('real');
+      document.getElementById('verdict-icon').textContent = '✅';
+      document.getElementById('conf-fill').className = 'conf-fill';
+      document.getElementById('conf-score').className = 'conf-score';
+    } else if (v === 'FAKE') {
+      banner.classList.add('fake');
+      document.getElementById('verdict-icon').textContent = '❌';
+      document.getElementById('conf-fill').className = 'conf-fill danger';
+      document.getElementById('conf-score').className = 'conf-score danger';
+    } else {
+      banner.classList.add('mixed');
+      document.getElementById('verdict-icon').textContent = '⚠️';
+      document.getElementById('conf-fill').className = 'conf-fill mixed';
+      document.getElementById('conf-score').className = 'conf-score mixed';
+    }
+
+    document.getElementById('verdict-title').textContent = data.verdict_title || v;
+    document.getElementById('verdict-subtitle').textContent = data.verdict_subtitle || '';
+
+    const pct = Math.min(99, Math.max(40, data.confidence || 60));
+    setTimeout(() => {
+      document.getElementById('conf-fill').style.width = pct + '%';
+      animateNumber(document.getElementById('conf-score'), 0, pct, 1200, '%');
+    }, 100);
+
+    // Probabilities
+    if (data.real_probability !== undefined) {
+      document.getElementById('real-prob').textContent = (data.real_probability * 100).toFixed(1) + '%';
+      document.getElementById('fake-prob').textContent = (data.fake_probability * 100).toFixed(1) + '%';
+    } else {
+      document.getElementById('real-prob').textContent = '—';
+      document.getElementById('fake-prob').textContent = '—';
+    }
+
+    document.getElementById('analysis-text').textContent = data.analysis || '';
+
+    const grid = document.getElementById('signals-grid');
+    grid.innerHTML = '';
+    (data.signals || []).slice(0, 6).forEach(s => {
+      const c = document.createElement('div');
+      c.className = 'signal-card';
+      c.innerHTML = `<div class="s-icon">${s.icon||'📌'}</div><div><div class="s-label">${s.label||'Signal'}</div><div class="s-val ${s.type||'neu'}">${s.value||'—'}</div></div>`;
+      grid.appendChild(c);
+    });
+
+    rs.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function animateNumber(el, from, to, dur, suffix='') {
+    const start = performance.now();
+    function update(now) {
+      const p = Math.min((now - start) / dur, 1);
+      el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))) + suffix;
+      if (p < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  function resetForm() {
+    document.getElementById('result-section').style.display = 'none';
+    document.getElementById('detector-card').style.display = 'block';
+    document.getElementById('article-text').value = '';
+    document.getElementById('article-url').value = '';
+    document.getElementById('char-count').textContent = '0 / 5000 characters';
+    document.getElementById('conf-fill').style.width = '0%';
+    document.getElementById('detector-card').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+</script>
+</body>
+</html>
