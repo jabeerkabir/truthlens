@@ -3,604 +3,774 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TruthLens — Professional Fact Verification | NOUN</title>
+<title>TruthLens — Professional Fact Verification Hub | NOUN</title>
+<meta name="description" content="AI-powered fake news detection. Trusted by journalists and researchers worldwide. Built at NOUN Nigeria."/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
-:root {
-  --green-deep:#0a4a2e; --green-mid:#1a7a4a; --green-bright:#22c55e;
-  --green-light:#bbf7d0; --green-pale:#f0fdf4; --white:#ffffff;
-  --off-white:#f8fffe; --gray-soft:#e8f5ee; --gray-text:#374151;
-  --gray-muted:#6b7280; --gold:#d4af37; --red:#dc2626; --orange:#ea580c;
-  --radius:18px; --shadow:0 20px 60px rgba(10,74,46,0.13);
+:root{
+  --green:#0a4a2e;--green-mid:#1a7a4a;--green-bright:#22c55e;
+  --green-light:#bbf7d0;--green-pale:#f0fdf4;--white:#fff;
+  --off:#f8fffe;--soft:#e8f5ee;--text:#1f2937;--muted:#6b7280;
+  --gold:#d4af37;--red:#dc2626;--orange:#ea580c;--blue:#2563eb;
+  --r:18px;--shadow:0 24px 64px rgba(10,74,46,0.14);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--gray-text);min-height:100vh;overflow-x:hidden}
-
-.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(34,197,94,0.10) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 90% 100%,rgba(10,74,46,0.08) 0%,transparent 55%),var(--off-white)}
-.bg-dots{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.3;background-image:radial-gradient(circle,#22c55e 1px,transparent 1px);background-size:36px 36px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 100%)}
+body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(34,197,94,.10),transparent 60%),
+             radial-gradient(ellipse 60% 50% at 90% 100%,rgba(10,74,46,.08),transparent 55%),var(--off)}
+.dots{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.25;
+  background-image:radial-gradient(circle,#22c55e 1px,transparent 1px);
+  background-size:38px 38px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent)}
 
 /* HEADER */
-header{position:relative;z-index:10;background:var(--green-deep);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;height:72px;box-shadow:0 4px 32px rgba(0,0,0,0.18)}
-.logo-group{display:flex;align-items:center;gap:14px}
-.noun-badge{width:46px;height:46px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;font-size:15px;color:var(--green-deep);box-shadow:0 0 0 3px rgba(212,175,55,0.3);flex-shrink:0}
-.logo-text h1{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;color:var(--white);line-height:1.1}
-.logo-text span{font-size:0.68rem;color:var(--green-light);letter-spacing:0.8px;text-transform:uppercase}
-.header-right{display:flex;align-items:center;gap:12px}
-.header-tag{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--green-light);border:1px solid rgba(187,247,208,0.35);padding:4px 12px;border-radius:100px}
-.live-badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);padding:4px 12px;border-radius:100px;font-size:0.65rem;color:var(--green-bright);font-weight:600}
+header{position:sticky;top:0;z-index:100;background:var(--green);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 5vw;height:70px;box-shadow:0 4px 32px rgba(0,0,0,.2)}
+.logo{display:flex;align-items:center;gap:13px}
+.badge{width:44px;height:44px;border-radius:50%;background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-weight:900;font-size:14px;
+  color:var(--green);box-shadow:0 0 0 3px rgba(212,175,55,.3)}
+.logo-txt h1{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--white);line-height:1}
+.logo-txt span{font-size:.65rem;color:var(--green-light);letter-spacing:.8px;text-transform:uppercase}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.live{display:flex;align-items:center;gap:5px;background:rgba(34,197,94,.15);
+  border:1px solid rgba(34,197,94,.3);padding:4px 12px;border-radius:100px;
+  font-size:.65rem;color:var(--green-bright);font-weight:600}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green-bright);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.4)}}
+.hdr-tag{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--green-light);
+  border:1px solid rgba(187,247,208,.3);padding:4px 11px;border-radius:100px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+
+/* SEARCH COUNTER BAR */
+.counter-bar{position:relative;z-index:5;background:rgba(10,74,46,.96);
+  padding:8px 5vw;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.counter-item{display:flex;align-items:center;gap:8px}
+.counter-label{font-size:.68rem;color:var(--green-light);text-transform:uppercase;letter-spacing:.5px}
+.counter-track{width:100px;height:5px;background:rgba(255,255,255,.15);border-radius:100px;overflow:hidden}
+.counter-fill{height:100%;border-radius:100px;background:var(--green-bright);transition:width .8s ease}
+.counter-val{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--white);font-weight:700}
+.counter-divider{width:1px;height:20px;background:rgba(255,255,255,.15)}
+.cache-pill{background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.3);
+  padding:3px 10px;border-radius:100px;font-size:.65rem;color:var(--green-bright)}
 
 /* HERO */
-.hero{position:relative;z-index:2;text-align:center;padding:70px 5vw 36px}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--green-pale);border:1.5px solid var(--green-light);border-radius:100px;padding:6px 18px;font-size:0.75rem;font-weight:600;color:var(--green-mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:20px;animation:fadeDown 0.6s ease both}
-.hero h2{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5.5vw,4rem);font-weight:900;line-height:1.08;color:var(--green-deep);margin-bottom:16px;animation:fadeDown 0.7s 0.1s ease both}
-.hero h2 em{font-style:normal;color:var(--green-mid);text-decoration:underline;text-decoration-color:var(--green-bright);text-underline-offset:6px}
-.hero-sub{max-width:580px;margin:0 auto 36px;font-size:1rem;color:var(--gray-muted);line-height:1.7;animation:fadeDown 0.8s 0.2s ease both}
-@keyframes fadeDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+.hero{position:relative;z-index:2;text-align:center;padding:64px 5vw 32px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--green-pale);
+  border:1.5px solid var(--green-light);border-radius:100px;padding:6px 18px;
+  font-size:.73rem;font-weight:600;color:var(--green-mid);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:18px;animation:fd .6s ease both}
+.hero h2{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5.5vw,4rem);
+  font-weight:900;color:var(--green);line-height:1.06;margin-bottom:14px;animation:fd .7s .1s ease both}
+.hero h2 em{font-style:normal;color:var(--green-mid);text-decoration:underline;
+  text-decoration-color:var(--green-bright);text-underline-offset:6px}
+.hero p{max-width:600px;margin:0 auto 32px;font-size:.97rem;color:var(--muted);
+  line-height:1.75;animation:fd .8s .2s ease both}
+@keyframes fd{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
 
-/* STATS BAR */
-.stats-bar{position:relative;z-index:2;max-width:780px;margin:0 auto 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;animation:fadeUp 0.9s 0.3s ease both}
-.stat-card{background:var(--white);border:1.5px solid rgba(34,197,94,0.14);border-radius:14px;padding:14px 16px;text-align:center;box-shadow:0 4px 16px rgba(10,74,46,0.06)}
-.stat-card .sv{font-family:'Space Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--green-deep)}
-.stat-card .sl{font-size:0.72rem;color:var(--gray-muted);margin-top:2px}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+/* STATS ROW */
+.stats{position:relative;z-index:2;max-width:800px;margin:0 auto 22px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;animation:fu .9s .3s ease both}
+.stat{background:var(--white);border:1.5px solid rgba(34,197,94,.13);border-radius:14px;
+  padding:14px;text-align:center;box-shadow:0 4px 14px rgba(10,74,46,.06)}
+.stat .sv{font-family:'Space Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--green)}
+.stat .sl{font-size:.7rem;color:var(--muted);margin-top:2px}
+@keyframes fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 
 /* DETECTOR CARD */
-.detector-card{position:relative;z-index:3;max-width:780px;margin:0 auto 50px;background:var(--white);border-radius:28px;box-shadow:var(--shadow);border:1.5px solid rgba(34,197,94,0.14);overflow:hidden;animation:fadeUp 0.9s 0.4s ease both}
-.card-top-bar{background:linear-gradient(135deg,var(--green-deep) 0%,var(--green-mid) 100%);padding:18px 32px;display:flex;align-items:center;justify-content:space-between}
-.card-top-bar h3{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--white)}
-.card-top-bar span{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--green-light);background:rgba(255,255,255,0.08);padding:4px 12px;border-radius:100px}
-.card-body{padding:28px 32px 32px}
-
-.input-tabs{display:flex;gap:4px;background:var(--gray-soft);border-radius:12px;padding:4px;margin-bottom:18px}
-.tab-btn{flex:1;padding:9px;border:none;cursor:pointer;border-radius:9px;background:transparent;font-family:'DM Sans',sans-serif;font-size:0.83rem;font-weight:500;color:var(--gray-muted);transition:all 0.25s}
-.tab-btn.active{background:var(--white);color:var(--green-deep);box-shadow:0 2px 12px rgba(10,74,46,0.10);font-weight:600}
-.input-panel{display:none}
-.input-panel.visible{display:block}
-
-textarea,input[type="url"]{width:100%;padding:15px 18px;border:2px solid var(--gray-soft);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:0.93rem;color:var(--gray-text);resize:none;outline:none;transition:border-color 0.25s,box-shadow 0.25s;background:var(--off-white);line-height:1.6}
-textarea{height:140px}
-textarea:focus,input[type="url"]:focus{border-color:var(--green-bright);box-shadow:0 0 0 4px rgba(34,197,94,0.12);background:var(--white)}
-.char-counter{text-align:right;margin-top:5px;font-size:0.72rem;color:var(--gray-muted);font-family:'Space Mono',monospace}
-
-.analyze-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--green-deep) 0%,var(--green-mid) 100%);color:var(--white);border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.3s;display:flex;align-items:center;justify-content:center;gap:10px;position:relative;overflow:hidden;margin-top:18px}
-.analyze-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--green-mid),var(--green-bright));opacity:0;transition:opacity 0.3s}
-.analyze-btn:hover::before{opacity:1}
-.analyze-btn:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(10,74,46,0.3)}
-.analyze-btn span,.btn-icon{position:relative;z-index:1}
+.card{position:relative;z-index:3;max-width:800px;margin:0 auto 48px;
+  background:var(--white);border-radius:26px;box-shadow:var(--shadow);
+  border:1.5px solid rgba(34,197,94,.13);overflow:hidden;animation:fu .9s .4s ease both}
+.card-head{background:linear-gradient(135deg,var(--green),var(--green-mid));
+  padding:18px 30px;display:flex;align-items:center;justify-content:space-between}
+.card-head h3{font-family:'Playfair Display',serif;font-size:.97rem;font-weight:700;color:var(--white)}
+.card-head span{font-family:'Space Mono',monospace;font-size:.63rem;color:var(--green-light);
+  background:rgba(255,255,255,.1);padding:3px 11px;border-radius:100px}
+.card-body{padding:26px 30px 30px}
+.tabs{display:flex;gap:4px;background:var(--soft);border-radius:12px;padding:4px;margin-bottom:16px}
+.tab{flex:1;padding:9px;border:none;cursor:pointer;border-radius:9px;background:transparent;
+  font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;color:var(--muted);transition:all .2s}
+.tab.active{background:var(--white);color:var(--green);box-shadow:0 2px 10px rgba(10,74,46,.1);font-weight:600}
+.panel{display:none}.panel.on{display:block}
+textarea,input[type=url]{width:100%;padding:14px 17px;border:2px solid var(--soft);border-radius:var(--r);
+  font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text);resize:none;outline:none;
+  transition:border-color .25s,box-shadow .25s;background:var(--off);line-height:1.6}
+textarea{height:135px}
+textarea:focus,input[type=url]:focus{border-color:var(--green-bright);box-shadow:0 0 0 4px rgba(34,197,94,.12);background:var(--white)}
+.ccount{text-align:right;margin-top:4px;font-size:.7rem;color:var(--muted);font-family:'Space Mono',monospace}
+.btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--green),var(--green-mid));
+  color:var(--white);border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;
+  font-size:.98rem;font-weight:600;cursor:pointer;transition:all .3s;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  position:relative;overflow:hidden;margin-top:16px}
+.btn::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--green-mid),var(--green-bright));opacity:0;transition:opacity .3s}
+.btn:hover::before{opacity:1}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(10,74,46,.28)}
+.btn span,.bic{position:relative;z-index:1}
 
 /* DISCLAIMER */
-.disclaimer{position:relative;z-index:3;max-width:780px;margin:-30px auto 50px;background:rgba(212,175,55,0.08);border:1.5px solid rgba(212,175,55,0.3);border-radius:14px;padding:12px 18px;display:flex;gap:10px;align-items:flex-start}
-.disclaimer span{font-size:0.78rem;color:#92400e;line-height:1.5}
-.disclaimer span strong{font-weight:700}
+.disc{position:relative;z-index:3;max-width:800px;margin:-28px auto 48px;
+  background:rgba(212,175,55,.07);border:1.5px solid rgba(212,175,55,.28);
+  border-radius:13px;padding:11px 17px;display:flex;gap:9px;align-items:flex-start}
+.disc span{font-size:.77rem;color:#92400e;line-height:1.5}
 
 /* LOADING */
-#loading-section{display:none;position:relative;z-index:3;max-width:780px;margin:0 auto 50px;background:var(--white);border-radius:28px;box-shadow:var(--shadow);border:1.5px solid rgba(34,197,94,0.14);padding:50px 36px;text-align:center}
-.scan-wrap{width:90px;height:90px;margin:0 auto 24px;position:relative}
-.scan-ring{position:absolute;inset:0;border-radius:50%;border:3px solid transparent;animation:spin 1.2s linear infinite}
-.scan-ring:nth-child(1){border-top-color:var(--green-bright);border-right-color:var(--green-bright)}
-.scan-ring:nth-child(2){inset:12px;border-bottom-color:var(--green-mid);border-left-color:var(--green-mid);animation-direction:reverse;animation-duration:0.9s}
-.scan-ring:nth-child(3){inset:24px;border-top-color:var(--gold);animation-duration:1.5s}
-.scan-core{position:absolute;inset:34px;border-radius:50%;background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:1rem}
+#loading{display:none;position:relative;z-index:3;max-width:800px;margin:0 auto 48px;
+  background:var(--white);border-radius:26px;box-shadow:var(--shadow);
+  border:1.5px solid rgba(34,197,94,.13);padding:48px 34px;text-align:center}
+.rings{width:88px;height:88px;margin:0 auto 22px;position:relative}
+.ring{position:absolute;inset:0;border-radius:50%;border:3px solid transparent;animation:spin 1.2s linear infinite}
+.ring:nth-child(1){border-top-color:var(--green-bright);border-right-color:var(--green-bright)}
+.ring:nth-child(2){inset:12px;border-bottom-color:var(--green-mid);border-left-color:var(--green-mid);animation-direction:reverse;animation-duration:.9s}
+.ring:nth-child(3){inset:24px;border-top-color:var(--gold);animation-duration:1.5s}
+.ring-core{position:absolute;inset:34px;border-radius:50%;background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:.95rem}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.load-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--green-deep);margin-bottom:4px}
-.load-sub{font-size:0.85rem;color:var(--gray-muted);margin-bottom:22px}
-.load-steps{list-style:none;max-width:320px;margin:0 auto;text-align:left}
-.load-steps li{display:flex;align-items:center;gap:12px;padding:7px 0;font-size:0.85rem;color:var(--gray-muted);border-bottom:1px solid var(--gray-soft);transition:color 0.4s}
-.load-steps li:last-child{border-bottom:none}
-.step-ic{width:22px;height:22px;border-radius:50%;flex-shrink:0;background:var(--gray-soft);display:flex;align-items:center;justify-content:center;font-size:0.7rem;transition:background 0.4s}
-.load-steps li.done{color:var(--green-mid)}.load-steps li.done .step-ic{background:var(--green-bright)}
-.load-steps li.active{color:var(--green-deep);font-weight:600}.load-steps li.active .step-ic{background:var(--gold);animation:pulse 1s infinite}
+.load-t{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--green);margin-bottom:3px}
+.load-s{font-size:.83rem;color:var(--muted);margin-bottom:20px}
+.steps{list-style:none;max-width:300px;margin:0 auto;text-align:left}
+.steps li{display:flex;align-items:center;gap:11px;padding:6px 0;
+  font-size:.83rem;color:var(--muted);border-bottom:1px solid var(--soft);transition:color .4s}
+.steps li:last-child{border-bottom:none}
+.sic{width:21px;height:21px;border-radius:50%;flex-shrink:0;background:var(--soft);
+  display:flex;align-items:center;justify-content:center;font-size:.68rem;transition:background .4s}
+.steps li.done{color:var(--green-mid)}.steps li.done .sic{background:var(--green-bright)}
+.steps li.act{color:var(--green);font-weight:600}.steps li.act .sic{background:var(--gold);animation:pulse 1s infinite}
 
 /* RESULT */
-#result-section{display:none;position:relative;z-index:3;max-width:780px;margin:0 auto 50px;animation:fadeUp 0.6s ease both}
+#result{display:none;position:relative;z-index:3;max-width:800px;margin:0 auto 48px;animation:fu .6s ease both}
 
-.verdict-banner{border-radius:24px 24px 0 0;padding:32px 40px;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:22px}
-.verdict-banner.real{background:linear-gradient(135deg,var(--green-deep) 0%,#155e3b 100%)}
-.verdict-banner.fake{background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 100%)}
-.verdict-banner.mixed,.verdict-banner.suspicious{background:linear-gradient(135deg,#78350f 0%,#92400e 100%)}
-.verdict-banner::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05)}
-.v-icon{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0}
-.v-text h3{font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:2px;margin-bottom:5px}
-.v-text h2{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:900;color:var(--white);line-height:1.1;margin-bottom:8px}
-.v-text p{font-size:0.88rem;color:rgba(255,255,255,0.8);line-height:1.6}
+.vbanner{border-radius:24px 24px 0 0;padding:30px 38px;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:20px}
+.vbanner.real{background:linear-gradient(135deg,var(--green),#155e3b)}
+.vbanner.fake{background:linear-gradient(135deg,#7f1d1d,#991b1b)}
+.vbanner.mixed,.vbanner.suspicious{background:linear-gradient(135deg,#78350f,#92400e)}
+.vbanner::after{content:'';position:absolute;top:-40px;right:-40px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.05)}
+.vic{width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:1.9rem;flex-shrink:0}
+.vtxt h3{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
+.vtxt h2{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,3.5vw,2.3rem);font-weight:900;color:var(--white);line-height:1.1;margin-bottom:7px}
+.vtxt p{font-size:.86rem;color:rgba(255,255,255,.8);line-height:1.6}
+.layer-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.lbadge{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:100px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9)}
 
-.conf-wrap{background:var(--white);padding:20px 40px;border-left:1.5px solid var(--gray-soft);border-right:1.5px solid var(--gray-soft);display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.conf-label{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--gray-muted);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
-.conf-track{flex:1;min-width:180px;height:8px;background:var(--gray-soft);border-radius:100px;overflow:hidden}
-.conf-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green-bright),var(--green-mid));transition:width 1.2s cubic-bezier(0.22,1,0.36,1);width:0%}
-.conf-fill.danger{background:linear-gradient(90deg,#f87171,#dc2626)}
-.conf-fill.warn{background:linear-gradient(90deg,#fb923c,#ea580c)}
-.conf-score{font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--green-deep);white-space:nowrap}
-.conf-score.danger{color:var(--red)}.conf-score.warn{color:var(--orange)}
+.confbar{background:var(--white);padding:18px 38px;border-left:1.5px solid var(--soft);border-right:1.5px solid var(--soft);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.clabel{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.ctrack{flex:1;min-width:160px;height:8px;background:var(--soft);border-radius:100px;overflow:hidden}
+.cfill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green-bright),var(--green-mid));transition:width 1.3s cubic-bezier(.22,1,.36,1);width:0%}
+.cfill.d{background:linear-gradient(90deg,#f87171,var(--red))}
+.cfill.w{background:linear-gradient(90deg,#fb923c,var(--orange))}
+.cscore{font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--green);white-space:nowrap}
+.cscore.d{color:var(--red)}.cscore.w{color:var(--orange)}
 
-.result-body{background:var(--white);border:1.5px solid var(--gray-soft);border-top:none;border-radius:0 0 24px 24px;padding:28px 36px 36px}
-.rb-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--green-deep);margin-bottom:14px;display:flex;align-items:center;gap:10px}
-.rb-title::before{content:'';display:inline-block;width:4px;height:18px;background:var(--green-bright);border-radius:2px;flex-shrink:0}
+.rbody{background:var(--white);border:1.5px solid var(--soft);border-top:none;border-radius:0 0 24px 24px;padding:26px 34px 34px}
+.rtitle{font-family:'Playfair Display',serif;font-size:.97rem;font-weight:700;color:var(--green);margin-bottom:12px;display:flex;align-items:center;gap:9px}
+.rtitle::before{content:'';display:inline-block;width:4px;height:17px;background:var(--green-bright);border-radius:2px;flex-shrink:0}
 
-/* PROB ROW */
-.prob-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
-.prob-card{background:var(--off-white);border:1.5px solid var(--gray-soft);border-radius:14px;padding:14px 16px;text-align:center}
-.prob-card .pl{font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-muted);margin-bottom:4px}
-.prob-card .pv{font-family:'Space Mono',monospace;font-size:1.3rem;font-weight:700}
-.prob-card.real .pv{color:var(--green-mid)}.prob-card.fake .pv{color:var(--red)}
-
-/* ANALYSIS */
-#analysis-text{font-size:0.92rem;line-height:1.9;color:var(--gray-text);background:var(--green-pale);padding:18px 22px;border-radius:14px;border-left:4px solid var(--green-bright);margin-bottom:24px;white-space:pre-wrap}
-
-/* SIGNALS */
-.signals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:24px}
-.sig-card{background:var(--off-white);border:1.5px solid var(--gray-soft);border-radius:14px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
-.sig-icon{font-size:1.15rem;flex-shrink:0;margin-top:1px}
-.sig-label{font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-muted);margin-bottom:2px}
-.sig-val{font-size:0.85rem;font-weight:600;color:var(--gray-text)}
-.sig-val.pos{color:var(--green-mid)}.sig-val.neg{color:var(--red)}.sig-val.neu{color:var(--orange)}
-
-/* FACT CHECKERS SECTION */
-.factcheck-section{background:rgba(220,38,38,0.04);border:1.5px solid rgba(220,38,38,0.15);border-radius:16px;padding:18px 20px;margin-bottom:24px}
-.factcheck-section .fc-title{font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.fc-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(220,38,38,0.1)}
-.fc-item:last-child{border-bottom:none;padding-bottom:0}
-.fc-badge{font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(220,38,38,0.1);color:var(--red);white-space:nowrap;flex-shrink:0}
-.fc-content{flex:1}
-.fc-source{font-size:0.75rem;font-weight:700;color:var(--red);margin-bottom:2px}
-.fc-headline{font-size:0.83rem;color:var(--gray-text);line-height:1.4;margin-bottom:4px}
-.fc-link{font-size:0.75rem;color:var(--green-mid);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:4px}
-.fc-link:hover{text-decoration:underline}
-
-/* SOURCES SECTION */
-.sources-section{margin-bottom:24px}
-.sources-grid{display:grid;grid-template-columns:1fr;gap:8px}
-.source-item{background:var(--off-white);border:1.5px solid var(--gray-soft);border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:12px;transition:border-color 0.2s,box-shadow 0.2s}
-.source-item:hover{border-color:var(--green-bright);box-shadow:0 4px 16px rgba(34,197,94,0.1)}
-.source-region{font-size:0.68rem;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--green-pale);color:var(--green-mid);white-space:nowrap;flex-shrink:0;margin-top:1px}
-.source-region.factcheck{background:rgba(220,38,38,0.08);color:var(--red)}
-.source-region.nigeria{background:rgba(34,197,94,0.12);color:var(--green-deep)}
-.source-content{flex:1;min-width:0}
-.source-name{font-size:0.8rem;font-weight:700;color:var(--green-deep);margin-bottom:2px}
-.source-title{font-size:0.82rem;color:var(--gray-text);line-height:1.4;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.source-snippet{font-size:0.75rem;color:var(--gray-muted);line-height:1.4;margin-bottom:5px}
-.source-link{font-size:0.75rem;color:var(--green-mid);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:4px}
-.source-link:hover{text-decoration:underline}
-.relevance-bar{display:flex;align-items:center;gap:6px;margin-top:4px}
-.rel-track{flex:1;height:3px;background:var(--gray-soft);border-radius:2px}
-.rel-fill{height:100%;border-radius:2px;background:var(--green-bright)}
-.rel-label{font-size:0.65rem;color:var(--gray-muted);font-family:'Space Mono',monospace;white-space:nowrap}
-
-/* JOURNALIST TOOLS */
-.journalist-section{background:linear-gradient(135deg,rgba(10,74,46,0.04),rgba(34,197,94,0.04));border:1.5px solid rgba(34,197,94,0.15);border-radius:16px;padding:18px 20px;margin-bottom:24px}
-.journalist-section .jt-title{font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green-deep);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.jt-links{display:flex;flex-wrap:wrap;gap:8px}
-.jt-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--white);border:1.5px solid var(--gray-soft);border-radius:100px;font-size:0.78rem;font-weight:600;color:var(--green-mid);text-decoration:none;transition:all 0.2s}
-.jt-link:hover{border-color:var(--green-bright);background:var(--green-pale);transform:translateY(-1px)}
+/* CACHE NOTICE */
+.cache-notice{background:rgba(37,99,235,.06);border:1.5px solid rgba(37,99,235,.2);border-radius:12px;padding:10px 14px;margin-bottom:18px;display:none;font-size:.78rem;color:#1d4ed8;display:flex;align-items:center;gap:8px}
 
 /* TIMESTAMP */
-.timestamp-bar{background:var(--gray-soft);border-radius:10px;padding:8px 14px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.ts-item{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--gray-muted)}
-.ts-item strong{color:var(--green-deep)}
+.tsbar{background:var(--soft);border-radius:10px;padding:8px 13px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.tsi{font-family:'Space Mono',monospace;font-size:.67rem;color:var(--muted)}
+.tsi strong{color:var(--green)}
 
-.try-again-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border:2px solid var(--green-bright);border-radius:var(--radius);background:transparent;color:var(--green-mid);font-family:'DM Sans',sans-serif;font-size:0.93rem;font-weight:600;cursor:pointer;transition:all 0.25s}
-.try-again-btn:hover{background:var(--green-pale);transform:translateY(-2px)}
+/* PROBS */
+.probs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+.pcard{background:var(--off);border:1.5px solid var(--soft);border-radius:13px;padding:13px;text-align:center}
+.pcard .pl{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
+.pcard .pv{font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700}
+.pcard.real .pv{color:var(--green-mid)}.pcard.fake .pv{color:var(--red)}
 
-/* INFO CARDS */
-.info-row{position:relative;z-index:2;max-width:780px;margin:0 auto 40px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.info-card{background:var(--white);border-radius:18px;padding:20px;border:1.5px solid rgba(34,197,94,0.12);box-shadow:0 4px 16px rgba(10,74,46,0.06);text-align:center;transition:transform 0.25s,box-shadow 0.25s}
-.info-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
-.info-card .ic{font-size:1.8rem;margin-bottom:8px;display:block}
-.info-card h4{font-family:'Playfair Display',serif;font-size:0.9rem;font-weight:700;color:var(--green-deep);margin-bottom:4px}
-.info-card p{font-size:0.75rem;color:var(--gray-muted);line-height:1.5}
+/* NLI EVIDENCE PANEL */
+.nli-panel{background:rgba(37,99,235,.04);border:1.5px solid rgba(37,99,235,.18);border-radius:15px;padding:18px 20px;margin-bottom:22px}
+.nli-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.nli-scores{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.nli-score{text-align:center;padding:10px;background:var(--white);border-radius:10px;border:1px solid var(--soft)}
+.nli-score .ns-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
+.nli-score .ns-val{font-family:'Space Mono',monospace;font-size:1rem;font-weight:700}
+.ns-val.sup{color:var(--green-mid)}.ns-val.con{color:var(--red)}.ns-val.neu{color:var(--orange)}
+.evidence-list{display:flex;flex-direction:column;gap:8px}
+.evid-item{background:var(--white);border-radius:10px;padding:10px 13px;border-left:3px solid var(--soft)}
+.evid-item.supports{border-left-color:var(--green-bright)}
+.evid-item.contradicts{border-left-color:var(--red)}
+.evid-verdict{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.evid-item.supports .evid-verdict{color:var(--green-mid)}
+.evid-item.contradicts .evid-verdict{color:var(--red)}
+.evid-text{font-size:.8rem;color:var(--text);line-height:1.5}
+
+/* ANALYSIS */
+#analysis-txt{font-size:.9rem;line-height:1.9;color:var(--text);background:var(--green-pale);
+  padding:16px 20px;border-radius:13px;border-left:4px solid var(--green-bright);
+  margin-bottom:22px;white-space:pre-wrap}
+
+/* SIGNALS */
+.sigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:9px;margin-bottom:22px}
+.sig{background:var(--off);border:1.5px solid var(--soft);border-radius:13px;padding:11px 13px;display:flex;align-items:flex-start;gap:9px}
+.sigi{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.sigl{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px}
+.sigv{font-size:.83rem;font-weight:600}
+.sigv.pos{color:var(--green-mid)}.sigv.neg{color:var(--red)}.sigv.neu{color:var(--orange)}
+
+/* FACT CHECKERS */
+.fcpanel{background:rgba(220,38,38,.04);border:1.5px solid rgba(220,38,38,.15);border-radius:14px;padding:16px 18px;margin-bottom:22px}
+.fctitle{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:11px;display:flex;align-items:center;gap:7px}
+.fcitem{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid rgba(220,38,38,.1)}
+.fcitem:last-child{border-bottom:none;padding-bottom:0}
+.fcbadge{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(220,38,38,.1);color:var(--red);white-space:nowrap;flex-shrink:0}
+.fccontent{flex:1}
+.fcsrc{font-size:.73rem;font-weight:700;color:var(--red);margin-bottom:2px}
+.fchd{font-size:.81rem;color:var(--text);line-height:1.4;margin-bottom:3px}
+.fclink{font-size:.73rem;color:var(--green-mid);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+.fclink:hover{text-decoration:underline}
+
+/* SOURCES */
+.src-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.srcitem{background:var(--off);border:1.5px solid var(--soft);border-radius:11px;padding:11px 14px;display:flex;align-items:flex-start;gap:11px;transition:border-color .2s}
+.srcitem:hover{border-color:var(--green-bright)}
+.sreg{font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--green-pale);color:var(--green-mid);white-space:nowrap;flex-shrink:0;margin-top:1px}
+.sreg.fc{background:rgba(220,38,38,.08);color:var(--red)}
+.sreg.ng{background:rgba(34,197,94,.12);color:var(--green)}
+.scont{flex:1;min-width:0}
+.sname{font-size:.78rem;font-weight:700;color:var(--green);margin-bottom:2px}
+.stitle{font-size:.81rem;color:var(--text);line-height:1.4;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ssnip{font-size:.73rem;color:var(--muted);line-height:1.4;margin-bottom:4px}
+.spub{font-size:.68rem;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:3px}
+.slink{font-size:.73rem;color:var(--green-mid);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+.slink:hover{text-decoration:underline}
+
+/* QUERIES USED */
+.queries-panel{background:var(--soft);border-radius:11px;padding:12px 14px;margin-bottom:22px}
+.qptitle{font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.5px;margin-bottom:7px}
+.qpills{display:flex;flex-wrap:wrap;gap:6px}
+.qpill{font-size:.74rem;background:var(--white);border:1.5px solid rgba(34,197,94,.2);border-radius:100px;padding:4px 11px;color:var(--green-mid);font-weight:500}
+
+/* JOURNALIST TOOLS */
+.jtpanel{background:linear-gradient(135deg,rgba(10,74,46,.04),rgba(34,197,94,.04));border:1.5px solid rgba(34,197,94,.15);border-radius:14px;padding:16px 18px;margin-bottom:22px}
+.jttitle{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:11px;display:flex;align-items:center;gap:7px}
+.jtlinks{display:flex;flex-wrap:wrap;gap:7px}
+.jtlink{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;background:var(--white);border:1.5px solid var(--soft);border-radius:100px;font-size:.76rem;font-weight:600;color:var(--green-mid);text-decoration:none;transition:all .2s}
+.jtlink:hover{border-color:var(--green-bright);background:var(--green-pale);transform:translateY(-1px)}
+
+.reset-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+  padding:13px;border:2px solid var(--green-bright);border-radius:var(--r);background:transparent;
+  color:var(--green-mid);font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:600;cursor:pointer;transition:all .25s}
+.reset-btn:hover{background:var(--green-pale);transform:translateY(-2px)}
+
+/* INFO ROW */
+.inforow{position:relative;z-index:2;max-width:800px;margin:0 auto 40px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.icard{background:var(--white);border-radius:16px;padding:20px;border:1.5px solid rgba(34,197,94,.11);box-shadow:0 4px 14px rgba(10,74,46,.05);text-align:center;transition:transform .2s,box-shadow .2s}
+.icard:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.icard .ic{font-size:1.7rem;margin-bottom:7px;display:block}
+.icard h4{font-family:'Playfair Display',serif;font-size:.88rem;font-weight:700;color:var(--green);margin-bottom:3px}
+.icard p{font-size:.73rem;color:var(--muted);line-height:1.5}
 
 /* FOOTER */
-footer{position:relative;z-index:2;background:var(--green-deep);padding:36px 5vw 24px;text-align:center}
-footer .fl{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--white);margin-bottom:3px}
-footer .fs{font-size:0.7rem;color:var(--green-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
-.foot-credits{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 20px;margin-bottom:16px}
-.foot-credits p{font-size:0.82rem;color:rgba(255,255,255,0.75)}
-.foot-credits a{color:var(--green-bright);text-decoration:none;font-weight:600;transition:color 0.2s}
-.foot-credits a:hover{color:var(--gold);text-decoration:underline}
-.divider{width:60px;height:2px;background:rgba(255,255,255,0.12);margin:0 auto 14px;border-radius:2px}
-footer .fc{font-size:0.72rem;color:rgba(255,255,255,0.4)}
+footer{position:relative;z-index:2;background:var(--green);padding:34px 5vw 22px;text-align:center}
+footer .fl{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--white);margin-bottom:2px}
+footer .fs{font-size:.68rem;color:var(--green-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:18px}
+.fcreds{display:flex;flex-wrap:wrap;justify-content:center;gap:5px 18px;margin-bottom:14px}
+.fcreds p{font-size:.8rem;color:rgba(255,255,255,.75)}
+.fcreds a{color:var(--green-bright);text-decoration:none;font-weight:600;transition:color .2s}
+.fcreds a:hover{color:var(--gold);text-decoration:underline}
+.fdiv{width:55px;height:2px;background:rgba(255,255,255,.12);margin:0 auto 12px;border-radius:2px}
+footer .fc{font-size:.7rem;color:rgba(255,255,255,.38)}
 
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green-deep);color:var(--white);padding:12px 24px;border-radius:100px;font-size:0.83rem;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:999;transition:transform 0.4s cubic-bezier(0.22,1,0.36,1);white-space:nowrap}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--green);color:var(--white);padding:11px 22px;border-radius:100px;
+  font-size:.81rem;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.22);
+  z-index:999;transition:transform .4s cubic-bezier(.22,1,.36,1);white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
 @media(max-width:640px){
-  .card-body{padding:20px 18px 24px}
-  .result-body{padding:22px 20px 26px}
-  .verdict-banner{padding:24px 22px;flex-direction:column}
-  .conf-wrap{padding:16px 22px}
-  .info-row{grid-template-columns:1fr}
-  .signals-grid{grid-template-columns:1fr 1fr}
-  .prob-row{grid-template-columns:1fr 1fr}
-  .stats-bar{grid-template-columns:1fr 1fr}
-  header{padding:0 4vw}
-  .header-tag{display:none}
+  .card-body{padding:18px 16px 22px}.rbody{padding:20px 18px 24px}
+  .vbanner{padding:22px 20px;flex-direction:column}.confbar{padding:14px 20px}
+  .inforow{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}
+  .sigs{grid-template-columns:1fr 1fr}.probs{grid-template-columns:1fr 1fr}
+  .nli-scores{grid-template-columns:1fr 1fr 1fr}
+  header{padding:0 4vw}.hdr-tag{display:none}
 }
 </style>
 </head>
 <body>
-<div class="bg-layer"></div>
-<div class="bg-dots"></div>
+<div class="bg"></div>
+<div class="dots"></div>
 
 <header>
-  <div class="logo-group">
-    <div class="noun-badge">NOUN</div>
-    <div class="logo-text">
+  <div class="logo">
+    <div class="badge">NOUN</div>
+    <div class="logo-txt">
       <h1>TruthLens</h1>
       <span>National Open University of Nigeria</span>
     </div>
   </div>
-  <div class="header-right">
-    <div class="live-badge"><span class="live-dot"></span>LIVE</div>
-    <div class="header-tag">Professional Fact Verification</div>
+  <div class="hdr-right">
+    <div class="live"><span class="live-dot"></span>LIVE</div>
+    <div class="hdr-tag">Global Fact Hub</div>
   </div>
 </header>
 
-<section class="hero">
-  <div class="hero-eyebrow"><span class="live-dot"></span>Research Project · NOUN 2025</div>
-  <h2>The Professional<br/><em>Fact Verification Hub</em></h2>
-  <p class="hero-sub">Trusted by journalists and researchers. Our three-layer AI system analyses linguistic patterns, searches 70+ global news outlets in real-time, and cross-references dedicated fact-checkers to give you the most accurate verdict possible.</p>
-</section>
-
-<div class="stats-bar">
-  <div class="stat-card"><div class="sv">70+</div><div class="sl">Outlets Monitored</div></div>
-  <div class="stat-card"><div class="sv">15+</div><div class="sl">Nigerian Sources</div></div>
-  <div class="stat-card"><div class="sv">8</div><div class="sl">Fact Checkers</div></div>
-  <div class="stat-card"><div class="sv">99%</div><div class="sl">Model Accuracy</div></div>
+<!-- SEARCH COUNTER BAR -->
+<div class="counter-bar">
+  <div class="counter-item">
+    <span class="counter-label">Searches Today</span>
+    <div class="counter-track"><div class="counter-fill" id="cFill" style="width:0%"></div></div>
+    <span class="counter-val" id="cVal">Loading…</span>
+  </div>
+  <div class="counter-divider"></div>
+  <div class="counter-item">
+    <span class="counter-label">Cache Hits</span>
+    <span class="counter-val" id="cCache">—</span>
+  </div>
+  <div class="counter-divider"></div>
+  <span class="cache-pill">⚡ Repeat claims served instantly from cache</span>
 </div>
 
-<div class="detector-card" id="detector-card">
-  <div class="card-top-bar">
-    <h3>🔍 News Analysis Engine</h3>
-    <span>3-Layer AI + RAG + Real-Time Web</span>
+<section class="hero">
+  <div class="eyebrow"><span class="live-dot"></span>Research Project · NOUN 2025</div>
+  <h2>The World's<br/><em>Fact Verification Hub</em></h2>
+  <p>Trusted by journalists and researchers globally. Our 6-layer AI pipeline — DistilBERT + Query Expansion + Google News + Article Scraping + FAISS Vector Search + NLI Evidence Verification — delivers the most accurate verdict possible on any news claim, anywhere in the world.</p>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="sv">6</div><div class="sl">AI Layers</div></div>
+  <div class="stat"><div class="sv">60+</div><div class="sl">Outlets</div></div>
+  <div class="stat"><div class="sv">8</div><div class="sl">Fact Checkers</div></div>
+  <div class="stat"><div class="sv">99%</div><div class="sl">Accuracy</div></div>
+</div>
+
+<div class="card" id="detector">
+  <div class="card-head">
+    <h3>🔍 News Verification Engine</h3>
+    <span>6-Layer AI + RAG + NLI</span>
   </div>
   <div class="card-body">
-    <div class="input-tabs">
-      <button class="tab-btn active" onclick="switchTab('text')">📝 Paste Headline / Article</button>
-      <button class="tab-btn" onclick="switchTab('url')">🔗 Enter Article URL</button>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('text')">📝 Paste Headline / Article</button>
+      <button class="tab" onclick="switchTab('url')">🔗 Article URL</button>
     </div>
-    <div id="tab-text" class="input-panel visible">
-      <textarea id="article-text" placeholder="Paste your news headline or full article here for verification…" oninput="countChars(this)"></textarea>
-      <div class="char-counter" id="char-count">0 / 5000 characters</div>
+    <div id="p-text" class="panel on">
+      <textarea id="txt" placeholder="Paste your news headline or full article here for verification…" oninput="cc(this)"></textarea>
+      <div class="ccount" id="cc">0 / 8000 characters</div>
     </div>
-    <div id="tab-url" class="input-panel">
-      <input type="url" id="article-url" placeholder="https://example.com/news-article"/>
-      <div style="margin-top:7px;font-size:0.76rem;color:var(--gray-muted)">Enter the URL of the article you want to verify.</div>
+    <div id="p-url" class="panel">
+      <input type="url" id="urlInput" placeholder="https://example.com/news-article"/>
+      <div style="margin-top:6px;font-size:.74rem;color:var(--muted)">Enter the full URL of the article to verify.</div>
     </div>
-    <button class="analyze-btn" onclick="analyzeNews()">
-      <span class="btn-icon">⚡</span>
-      <span>Verify This Content</span>
+    <button class="btn" onclick="analyse()">
+      <span class="bic">⚡</span><span>Verify This Content — Full 6-Layer Analysis</span>
     </button>
   </div>
 </div>
 
-<div class="disclaimer">
+<div class="disc">
   <span>⚠️</span>
-  <span><strong>Journalist Note:</strong> TruthLens is an AI-assisted verification tool. Always corroborate findings with primary sources and editorial judgement. Results are based on real-time web search and AI pattern analysis — not legal or definitive fact-checking rulings.</span>
+  <span><strong>Journalist Note:</strong> TruthLens uses AI + real-time web search + NLI evidence matching. Always corroborate with primary sources and editorial judgement. Not a substitute for professional fact-checking.</span>
 </div>
 
-<div id="loading-section">
-  <div class="scan-wrap">
-    <div class="scan-ring"></div>
-    <div class="scan-ring"></div>
-    <div class="scan-ring"></div>
-    <div class="scan-core">🔍</div>
+<!-- LOADING -->
+<div id="loading">
+  <div class="rings">
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="ring-core">🔍</div>
   </div>
-  <div class="load-title">Verifying Content…</div>
-  <div class="load-sub">Searching 70+ outlets in real-time</div>
-  <ul class="load-steps" id="load-steps">
-    <li id="s1"><div class="step-ic">→</div>Running AI linguistic analysis</li>
-    <li id="s2"><div class="step-ic">→</div>Checking date and temporal claims</li>
-    <li id="s3"><div class="step-ic">→</div>Searching Nigerian news outlets</li>
-    <li id="s4"><div class="step-ic">→</div>Searching global outlets and fact-checkers</li>
-    <li id="s5"><div class="step-ic">→</div>Verifying source relevance to claim</li>
-    <li id="s6"><div class="step-ic">→</div>Generating verdict and explanation</li>
+  <div class="load-t">Running 6-Layer Verification…</div>
+  <div class="load-s" id="load-sub">Initialising pipeline</div>
+  <ul class="steps" id="steps">
+    <li id="s1"><div class="sic">→</div>Layer 1: AI linguistic analysis</li>
+    <li id="s2"><div class="sic">→</div>Layer 2: Generating search queries</li>
+    <li id="s3"><div class="sic">→</div>Layer 3: Searching 60+ global outlets</li>
+    <li id="s4"><div class="sic">→</div>Layer 4: Scraping article content</li>
+    <li id="s5"><div class="sic">→</div>Layer 5: FAISS vector similarity search</li>
+    <li id="s6"><div class="sic">→</div>Layer 6: NLI evidence verification</li>
+    <li id="s7"><div class="sic">→</div>Generating final verdict</li>
   </ul>
 </div>
 
-<div id="result-section">
-  <div class="verdict-banner" id="verdict-banner">
-    <div class="v-icon" id="v-icon">✅</div>
-    <div class="v-text">
+<!-- RESULT -->
+<div id="result">
+  <div class="vbanner" id="vbanner">
+    <div class="vic" id="vic">✅</div>
+    <div class="vtxt">
       <h3>TruthLens Verdict</h3>
-      <h2 id="v-title">Likely Authentic</h2>
-      <p id="v-subtitle">Content shows strong credibility indicators.</p>
+      <h2 id="vtitle">—</h2>
+      <p id="vsub">—</p>
+      <div class="layer-badges" id="lbadges"></div>
     </div>
   </div>
-  <div class="conf-wrap">
-    <span class="conf-label">Confidence Level</span>
-    <div class="conf-track"><div class="conf-fill" id="conf-fill"></div></div>
-    <span class="conf-score" id="conf-score">0%</span>
+  <div class="confbar">
+    <span class="clabel">Confidence</span>
+    <div class="ctrack"><div class="cfill" id="cfill"></div></div>
+    <span class="cscore" id="cscore">0%</span>
   </div>
-  <div class="result-body">
+  <div class="rbody">
 
-    <div class="timestamp-bar" id="timestamp-bar">
-      <span class="ts-item">Verified: <strong id="ts-time">—</strong></span>
-      <span class="ts-item">Sources searched: <strong id="ts-sources">70+</strong></span>
-      <span class="ts-item">Relevant matches: <strong id="ts-matches">—</strong></span>
+    <!-- Cache notice -->
+    <div class="cache-notice" id="cache-notice">⚡ Served from cache — this claim was recently verified. Results are up to 6 hours old.</div>
+
+    <!-- Timestamp -->
+    <div class="tsbar">
+      <span class="tsi">Verified: <strong id="ts-time">—</strong></span>
+      <span class="tsi">Outlets searched: <strong id="ts-src">60+</strong></span>
+      <span class="tsi">Articles scraped: <strong id="ts-scrape">—</strong></span>
+      <span class="tsi">Evidence chunks: <strong id="ts-chunks">—</strong></span>
     </div>
 
-    <h4 class="rb-title">Probability Breakdown</h4>
-    <div class="prob-row">
-      <div class="prob-card real"><div class="pl">Real News Probability</div><div class="pv" id="real-prob">—</div></div>
-      <div class="prob-card fake"><div class="pl">Fake News Probability</div><div class="pv" id="fake-prob">—</div></div>
+    <!-- Probs -->
+    <h4 class="rtitle">Probability Breakdown</h4>
+    <div class="probs">
+      <div class="pcard real"><div class="pl">Real Probability</div><div class="pv" id="rprob">—</div></div>
+      <div class="pcard fake"><div class="pl">Fake Probability</div><div class="pv" id="fprob">—</div></div>
     </div>
 
-    <div id="factcheck-panel" style="display:none">
-      <h4 class="rb-title">Fact-Checker Results</h4>
-      <div class="factcheck-section">
-        <div class="fc-title">🔬 Verified by Independent Fact-Checkers</div>
-        <div id="factcheck-list"></div>
+    <!-- NLI Evidence -->
+    <div id="nli-wrap" style="display:none">
+      <h4 class="rtitle">NLI Evidence Analysis</h4>
+      <div class="nli-panel">
+        <div class="nli-title">🧠 Cross-Encoder Evidence Verification (DeBERTa)</div>
+        <div class="nli-scores">
+          <div class="nli-score"><div class="ns-label">Supports Claim</div><div class="ns-val sup" id="nli-sup">—</div></div>
+          <div class="nli-score"><div class="ns-label">Contradicts</div><div class="ns-val con" id="nli-con">—</div></div>
+          <div class="nli-score"><div class="ns-label">Neutral</div><div class="ns-val neu" id="nli-neu">—</div></div>
+        </div>
+        <div class="evidence-list" id="evid-list"></div>
       </div>
     </div>
 
-    <h4 class="rb-title">Detailed Analysis</h4>
-    <div id="analysis-text"></div>
-
-    <h4 class="rb-title">Signal Breakdown</h4>
-    <div class="signals-grid" id="signals-grid"></div>
-
-    <div id="sources-panel" style="display:none">
-      <h4 class="rb-title">Sources Found in Real-Time</h4>
-      <div class="sources-section">
-        <div class="sources-grid" id="sources-list"></div>
+    <!-- Fact checkers -->
+    <div id="fc-wrap" style="display:none">
+      <h4 class="rtitle">Fact-Checker Results</h4>
+      <div class="fcpanel">
+        <div class="fctitle">🔬 Independent Fact-Checkers</div>
+        <div id="fc-list"></div>
       </div>
     </div>
 
-    <h4 class="rb-title">Verify Further</h4>
-    <div class="journalist-section">
-      <div class="jt-title">🔗 Cross-Reference These Fact-Checkers</div>
-      <div class="jt-links" id="jt-links">
-        <a class="jt-link" href="https://dubawa.org" target="_blank">🇳🇬 Dubawa.org</a>
-        <a class="jt-link" href="https://africacheck.org" target="_blank">🌍 AfricaCheck</a>
-        <a class="jt-link" href="https://snopes.com" target="_blank">🌐 Snopes</a>
-        <a class="jt-link" href="https://factcheck.org" target="_blank">🌐 FactCheck.org</a>
-        <a class="jt-link" href="https://pesacheck.org" target="_blank">🌍 PesaCheck</a>
-        <a class="jt-link" href="https://reuters.com/fact-check" target="_blank">📰 Reuters Fact Check</a>
-        <a class="jt-link" href="https://apnews.com/hub/ap-fact-check" target="_blank">📰 AP Fact Check</a>
-        <a class="jt-link" href="https://www.bbc.com/news/reality-check" target="_blank">📰 BBC Reality Check</a>
-        <a class="jt-link" href="https://boomlive.in" target="_blank">🌏 BoomLive</a>
-        <a class="jt-link" href="https://fullfact.org" target="_blank">🌐 Full Fact</a>
+    <!-- Analysis -->
+    <h4 class="rtitle">Detailed Analysis</h4>
+    <div id="analysis-txt"></div>
+
+    <!-- Signals -->
+    <h4 class="rtitle">Signal Breakdown</h4>
+    <div class="sigs" id="sigs"></div>
+
+    <!-- Queries used -->
+    <div id="q-wrap" style="display:none">
+      <h4 class="rtitle">Search Queries Used</h4>
+      <div class="queries-panel">
+        <div class="qptitle">🔍 Query Expansion</div>
+        <div class="qpills" id="qpills"></div>
       </div>
     </div>
 
-    <button class="try-again-btn" onclick="resetForm()">↩ Verify Another Article</button>
+    <!-- Sources -->
+    <div id="src-wrap" style="display:none">
+      <h4 class="rtitle">Sources Found in Real-Time</h4>
+      <div class="src-grid" id="src-list"></div>
+    </div>
+
+    <!-- Journalist tools -->
+    <h4 class="rtitle">Verify Further</h4>
+    <div class="jtpanel">
+      <div class="jttitle">🔗 Cross-Reference Fact-Checkers</div>
+      <div class="jtlinks">
+        <a class="jtlink" href="https://dubawa.org" target="_blank" rel="noopener">🇳🇬 Dubawa.org</a>
+        <a class="jtlink" href="https://africacheck.org" target="_blank" rel="noopener">🌍 AfricaCheck</a>
+        <a class="jtlink" href="https://snopes.com" target="_blank" rel="noopener">🌐 Snopes</a>
+        <a class="jtlink" href="https://factcheck.org" target="_blank" rel="noopener">🌐 FactCheck.org</a>
+        <a class="jtlink" href="https://pesacheck.org" target="_blank" rel="noopener">🌍 PesaCheck</a>
+        <a class="jtlink" href="https://reuters.com/fact-check" target="_blank" rel="noopener">📰 Reuters FC</a>
+        <a class="jtlink" href="https://apnews.com/hub/ap-fact-check" target="_blank" rel="noopener">📰 AP Fact Check</a>
+        <a class="jtlink" href="https://bbc.com/news/reality-check" target="_blank" rel="noopener">📰 BBC Reality Check</a>
+        <a class="jtlink" href="https://fullfact.org" target="_blank" rel="noopener">🌐 Full Fact</a>
+        <a class="jtlink" href="https://boomlive.in" target="_blank" rel="noopener">🌏 BoomLive</a>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="reset()">↩ Verify Another Article</button>
   </div>
 </div>
 
-<div class="info-row">
-  <div class="info-card"><span class="ic">🧠</span><h4>3-Layer AI Detection</h4><p>DistilBERT model trained on 10,000+ articles combined with real-time web search and fact-checker verification.</p></div>
-  <div class="info-card"><span class="ic">🌍</span><h4>70+ Global Outlets</h4><p>Monitors Nigerian, African, Asian, European and global outlets simultaneously including dedicated fact-checkers.</p></div>
-  <div class="info-card"><span class="ic">🎓</span><h4>Academic Research</h4><p>Built as part of a postgraduate research project at the National Open University of Nigeria (NOUN).</p></div>
+<div class="inforow">
+  <div class="icard"><span class="ic">🧠</span><h4>6-Layer AI Pipeline</h4><p>DistilBERT + Query Expansion + Google News + Article Scraping + FAISS + NLI DeBERTa for maximum accuracy.</p></div>
+  <div class="icard"><span class="ic">🌍</span><h4>Global Coverage</h4><p>Monitors 60+ outlets across Nigeria, Africa, Asia, Europe, Americas and 8 dedicated fact-checkers simultaneously.</p></div>
+  <div class="icard"><span class="ic">🎓</span><h4>Academic Research</h4><p>Built as postgraduate research at the National Open University of Nigeria — available for the world.</p></div>
 </div>
 
 <footer>
   <div class="fl">TruthLens</div>
-  <div class="fs">Professional Fact Verification Hub · NOUN Research Project</div>
-  <div class="foot-credits">
+  <div class="fs">Global Fact Verification Hub · NOUN Research Project</div>
+  <div class="fcreds">
     <p>Developed by <a href="https://linktr.ee/jabirmuhamm" target="_blank" rel="noopener">Jabir Muhammad Kabir</a></p>
     <p>Supervised by <a href="https://linktr.ee/drojeniyi" target="_blank" rel="noopener">Dr. Ojeniyi Adebayo</a></p>
   </div>
-  <div class="divider"></div>
-  <div class="fc">© 2025 National Open University of Nigeria · All rights reserved</div>
+  <div class="fdiv"></div>
+  <div class="fc">© 2025 National Open University of Nigeria · Open to the world</div>
 </footer>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const API_BASE = 'https://jabirkabir-truthlens-api.hf.space';
+const API = 'https://jabirkabir-truthlens-api.hf.space';
+const STEPS = ['s1','s2','s3','s4','s5','s6','s7'];
+const STEP_DELAYS = [700,900,2500,4000,5500,7000,8200];
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active',(i===0&&tab==='text')||(i===1&&tab==='url')));
-  document.getElementById('tab-text').classList.toggle('visible', tab==='text');
-  document.getElementById('tab-url').classList.toggle('visible', tab==='url');
+// Load counter on page load
+async function loadCounter() {
+  try {
+    const r = await fetch(`${API}/stats`);
+    const d = await r.json();
+    document.getElementById('cVal').textContent = `${d.searches} searches`;
+    document.getElementById('cCache').textContent = `${d.cache_hits} hits`;
+    const pct = Math.min(100, (d.searches / 200) * 100);
+    document.getElementById('cFill').style.width = pct + '%';
+  } catch(e) {
+    document.getElementById('cVal').textContent = 'API offline';
+  }
+}
+loadCounter();
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active',(i===0&&t==='text')||(i===1&&t==='url')));
+  document.getElementById('p-text').classList.toggle('on', t==='text');
+  document.getElementById('p-url').classList.toggle('on', t==='url');
 }
 
-function countChars(el) {
-  const n = el.value.length;
-  document.getElementById('char-count').textContent = n + ' / 5000 characters';
-  if (n > 5000) el.value = el.value.slice(0, 5000);
+function cc(el) {
+  const n = Math.min(el.value.length, 8000);
+  el.value = el.value.slice(0, 8000);
+  document.getElementById('cc').textContent = n + ' / 8000 characters';
 }
 
-function showToast(msg) {
+function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-const stepIds = ['s1','s2','s3','s4','s5','s6'];
-function animateSteps(cb) {
-  let i = 0;
-  stepIds.forEach(id => { const el = document.getElementById(id); el.className=''; el.querySelector('.step-ic').textContent='→'; });
-  const iv = setInterval(() => {
-    if (i > 0) { const p = document.getElementById(stepIds[i-1]); p.classList.remove('active'); p.classList.add('done'); p.querySelector('.step-ic').textContent='✓'; }
-    if (i < stepIds.length) { document.getElementById(stepIds[i]).classList.add('active'); i++; }
-    else { clearInterval(iv); setTimeout(cb, 400); }
-  }, 700);
+function animSteps(done) {
+  STEPS.forEach(id => { const el=document.getElementById(id); el.className=''; el.querySelector('.sic').textContent='→'; });
+  STEPS.forEach((id, i) => {
+    setTimeout(() => {
+      if (i > 0) {
+        const p = document.getElementById(STEPS[i-1]);
+        p.classList.remove('act'); p.classList.add('done'); p.querySelector('.sic').textContent='✓';
+      }
+      const el = document.getElementById(id);
+      el.classList.add('act');
+      document.getElementById('load-sub').textContent = el.textContent.trim();
+    }, STEP_DELAYS[i]);
+  });
+  setTimeout(() => {
+    const last = document.getElementById(STEPS[STEPS.length-1]);
+    last.classList.remove('act'); last.classList.add('done'); last.querySelector('.sic').textContent='✓';
+    done();
+  }, STEP_DELAYS[STEPS.length-1] + 600);
 }
 
-async function analyzeNews() {
-  const activeTab = document.querySelector('.tab-btn.active').textContent.includes('Paste') ? 'text' : 'url';
-  const content = activeTab === 'text' ? document.getElementById('article-text').value.trim() : document.getElementById('article-url').value.trim();
-  if (!content || content.length < 15) { showToast('Please enter more text for verification.'); return; }
+async function analyse() {
+  const isUrl = document.querySelector('.tab.active').textContent.includes('URL');
+  const content = isUrl
+    ? document.getElementById('urlInput').value.trim()
+    : document.getElementById('txt').value.trim();
+  if (!content || content.length < 10) { toast('Please enter more text to verify.'); return; }
 
-  document.getElementById('detector-card').style.display = 'none';
-  document.querySelector('.disclaimer').style.display = 'none';
-  document.getElementById('result-section').style.display = 'none';
-  document.getElementById('loading-section').style.display = 'block';
+  document.getElementById('detector').style.display = 'none';
+  document.querySelector('.disc').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
 
-  let apiDone = false, stepsDone = false, apiResult = null;
-  animateSteps(() => { stepsDone = true; if (apiDone) showResult(apiResult); });
+  let apiDone = false, stepsDone = false, apiData = null;
+
+  animSteps(() => { stepsDone = true; if (apiDone) render(apiData); });
 
   try {
-    const res = await fetch(`${API_BASE}/analyse`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({text: content.slice(0, 4000)})
+    const res = await fetch(`${API}/analyse`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text: content.slice(0,8000)})
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    apiResult = await res.json();
-  } catch (err) {
-    apiResult = {
-      verdict: 'MIXED', confidence: 55,
-      verdict_title: 'Connection Error',
-      verdict_subtitle: 'Could not reach verification API.',
-      analysis: 'Unable to connect to the TruthLens API.\n\nPlease check:\n1. Your internet connection\n2. The HF Space may be sleeping — visit https://jabirkabir-truthlens-api.hf.space to wake it, then try again.',
-      signals: [
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    apiData = await res.json();
+  } catch(err) {
+    apiData = {
+      verdict:'MIXED', confidence:50,
+      verdict_title:'Connection Error',
+      verdict_subtitle:'Could not reach TruthLens API.',
+      analysis:`Unable to connect to the API.\n\n1. Visit https://jabirkabir-truthlens-api.hf.space to wake the Space.\n2. Wait 30 seconds then try again.`,
+      signals:[
         {icon:'🌐',label:'Connection',value:'API unreachable',type:'neg'},
         {icon:'💤',label:'HF Space',value:'May be sleeping',type:'neu'},
-        {icon:'🔁',label:'Action',value:'Wake Space and retry',type:'neu'},
-        {icon:'📡',label:'Network',value:'Check connection',type:'neu'},
-        {icon:'⚙️',label:'Setup',value:'Verify deployment',type:'neu'},
-        {icon:'🔗',label:'URL',value:'Check configuration',type:'neu'}
+        {icon:'🔁',label:'Action',value:'Wake Space & retry',type:'neu'},
+        {icon:'📡',label:'Network',value:'Check connection',type:'neg'},
+        {icon:'🧠',label:'NLI',value:'N/A',type:'neu'},
+        {icon:'🤖',label:'AI Model',value:'N/A',type:'neu'},
       ],
-      real_probability: 0, fake_probability: 0,
-      sources_found: [], fact_checks: []
+      real_probability:0, fake_probability:0,
+      nli:{verdict:'insufficient',support:0,contradict:0,evidence:[]},
+      sources_found:[], fact_checks:[], queries_used:[],
+      articles_scraped:0, evidence_chunks:0, from_cache:false
     };
   }
 
   apiDone = true;
-  if (stepsDone) showResult(apiResult);
+  if (stepsDone) render(apiData);
 }
 
-function showResult(data) {
-  document.getElementById('loading-section').style.display = 'none';
-  const rs = document.getElementById('result-section');
+function render(d) {
+  document.getElementById('loading').style.display = 'none';
+  const rs = document.getElementById('result');
   rs.style.display = 'block';
 
-  const v = (data.verdict || 'MIXED').toUpperCase();
-  const banner = document.getElementById('verdict-banner');
-  banner.className = 'verdict-banner';
+  const v = (d.verdict||'MIXED').toUpperCase();
+  const banner = document.getElementById('vbanner');
+  banner.className = 'vbanner';
+  if (v==='REAL')     { banner.classList.add('real'); document.getElementById('vic').textContent='✅'; document.getElementById('cfill').className='cfill'; document.getElementById('cscore').className='cscore'; }
+  else if (v==='FAKE'){ banner.classList.add('fake'); document.getElementById('vic').textContent='❌'; document.getElementById('cfill').className='cfill d'; document.getElementById('cscore').className='cscore d'; }
+  else                { banner.classList.add('mixed'); document.getElementById('vic').textContent='⚠️'; document.getElementById('cfill').className='cfill w'; document.getElementById('cscore').className='cscore w'; }
 
-  if (v === 'REAL') {
-    banner.classList.add('real');
-    document.getElementById('v-icon').textContent = '✅';
-    document.getElementById('conf-fill').className = 'conf-fill';
-    document.getElementById('conf-score').className = 'conf-score';
-  } else if (v === 'FAKE') {
-    banner.classList.add('fake');
-    document.getElementById('v-icon').textContent = '❌';
-    document.getElementById('conf-fill').className = 'conf-fill danger';
-    document.getElementById('conf-score').className = 'conf-score danger';
-  } else {
-    banner.classList.add('mixed');
-    document.getElementById('v-icon').textContent = '⚠️';
-    document.getElementById('conf-fill').className = 'conf-fill warn';
-    document.getElementById('conf-score').className = 'conf-score warn';
-  }
+  document.getElementById('vtitle').textContent = d.verdict_title||v;
+  document.getElementById('vsub').textContent   = d.verdict_subtitle||'';
 
-  document.getElementById('v-title').textContent = data.verdict_title || v;
-  document.getElementById('v-subtitle').textContent = data.verdict_subtitle || '';
+  // Layer badges
+  const badges = document.getElementById('lbadges');
+  badges.innerHTML = '';
+  const layers = ['DistilBERT','Query Expansion','Google News','Article Scraping','FAISS','NLI DeBERTa'];
+  layers.forEach(l => { const b=document.createElement('span'); b.className='lbadge'; b.textContent='✓ '+l; badges.appendChild(b); });
 
-  const pct = Math.min(99, Math.max(40, data.confidence || 60));
+  // Confidence
+  const pct = Math.min(99, Math.max(38, d.confidence||50));
   setTimeout(() => {
-    document.getElementById('conf-fill').style.width = pct + '%';
-    animNum(document.getElementById('conf-score'), 0, pct, 1200, '%');
+    document.getElementById('cfill').style.width = pct+'%';
+    animNum(document.getElementById('cscore'), 0, pct, 1200, '%');
   }, 100);
 
   // Timestamp
-  const now = new Date();
-  document.getElementById('ts-time').textContent = now.toLocaleString();
-  document.getElementById('ts-matches').textContent = (data.sources_found || []).length;
+  document.getElementById('ts-time').textContent   = new Date().toLocaleString();
+  document.getElementById('ts-scrape').textContent = d.articles_scraped ?? '—';
+  document.getElementById('ts-chunks').textContent = d.evidence_chunks  ?? '—';
 
-  // Probabilities
-  document.getElementById('real-prob').textContent = data.real_probability !== undefined ? (data.real_probability * 100).toFixed(1) + '%' : '—';
-  document.getElementById('fake-prob').textContent = data.fake_probability !== undefined ? (data.fake_probability * 100).toFixed(1) + '%' : '—';
+  // Cache notice
+  const cn = document.getElementById('cache-notice');
+  cn.style.display = d.from_cache ? 'flex' : 'none';
 
-  // Fact checkers panel
-  const factChecks = data.fact_checks || [];
-  if (factChecks.length > 0) {
-    document.getElementById('factcheck-panel').style.display = 'block';
-    const fcList = document.getElementById('factcheck-list');
-    fcList.innerHTML = '';
-    factChecks.forEach(fc => {
-      const isFake = fc.title.toLowerCase().match(/false|fake|misleading|debunked|misinformation/);
-      const isReal = fc.title.toLowerCase().match(/true|confirmed|accurate|verified/);
-      const badge = isFake ? 'FALSE' : isReal ? 'VERIFIED' : 'CHECKED';
-      fcList.innerHTML += `
-        <div class="fc-item">
-          <span class="fc-badge">${badge}</span>
-          <div class="fc-content">
-            <div class="fc-source">${fc.name}</div>
-            <div class="fc-headline">${fc.title}</div>
-            ${fc.snippet ? `<div style="font-size:0.75rem;color:var(--gray-muted);margin-bottom:4px">${fc.snippet}</div>` : ''}
-            <a class="fc-link" href="${fc.article_url || fc.url}" target="_blank" rel="noopener">Read full fact check →</a>
-          </div>
-        </div>`;
+  // Probs
+  document.getElementById('rprob').textContent = d.real_probability!=null ? (d.real_probability*100).toFixed(1)+'%' : '—';
+  document.getElementById('fprob').textContent = d.fake_probability!=null ? (d.fake_probability*100).toFixed(1)+'%' : '—';
+
+  // NLI panel
+  const nli = d.nli||{};
+  if (nli.support > 0 || nli.contradict > 0) {
+    document.getElementById('nli-wrap').style.display = 'block';
+    document.getElementById('nli-sup').textContent = (nli.support||0)+'%';
+    document.getElementById('nli-con').textContent = (nli.contradict||0)+'%';
+    document.getElementById('nli-neu').textContent = Math.max(0, 100-(nli.support||0)-(nli.contradict||0))+'%';
+    const el = document.getElementById('evid-list');
+    el.innerHTML = '';
+    (nli.evidence||[]).forEach(e => {
+      const cls = e.verdict==='SUPPORTS' ? 'supports' : 'contradicts';
+      el.innerHTML += `<div class="evid-item ${cls}">
+        <div class="evid-verdict">${e.verdict} CLAIM — ${e.confidence}% confidence</div>
+        <div class="evid-text">"${e.text}"</div>
+      </div>`;
     });
   } else {
-    document.getElementById('factcheck-panel').style.display = 'none';
+    document.getElementById('nli-wrap').style.display = 'none';
+  }
+
+  // Fact checkers
+  const fcs = d.fact_checks||[];
+  if (fcs.length > 0) {
+    document.getElementById('fc-wrap').style.display = 'block';
+    const fl = document.getElementById('fc-list');
+    fl.innerHTML = '';
+    fcs.forEach(fc => {
+      const isFake = /false|fake|misleading|debunked|hoax/i.test(fc.title);
+      const isReal = /true|confirmed|verified|accurate/i.test(fc.title);
+      const badge  = isFake ? 'FALSE' : isReal ? 'VERIFIED' : 'CHECKED';
+      fl.innerHTML += `<div class="fcitem">
+        <span class="fcbadge">${badge}</span>
+        <div class="fccontent">
+          <div class="fcsrc">${fc.name}</div>
+          <div class="fchd">${fc.title}</div>
+          ${fc.snippet?`<div style="font-size:.73rem;color:var(--muted);margin-bottom:3px">${fc.snippet}</div>`:''}
+          <a class="fclink" href="${fc.article_url||fc.url}" target="_blank" rel="noopener">Read full fact check →</a>
+        </div>
+      </div>`;
+    });
+  } else {
+    document.getElementById('fc-wrap').style.display = 'none';
   }
 
   // Analysis
-  document.getElementById('analysis-text').textContent = data.analysis || '';
+  document.getElementById('analysis-txt').textContent = d.analysis||'';
 
   // Signals
-  const grid = document.getElementById('signals-grid');
-  grid.innerHTML = '';
-  (data.signals || []).slice(0, 6).forEach(s => {
-    grid.innerHTML += `
-      <div class="sig-card">
-        <div class="sig-icon">${s.icon || '📌'}</div>
-        <div>
-          <div class="sig-label">${s.label || 'Signal'}</div>
-          <div class="sig-val ${s.type || 'neu'}">${s.value || '—'}</div>
-        </div>
-      </div>`;
+  const sg = document.getElementById('sigs');
+  sg.innerHTML = '';
+  (d.signals||[]).forEach(s => {
+    sg.innerHTML += `<div class="sig"><div class="sigi">${s.icon||'📌'}</div><div><div class="sigl">${s.label}</div><div class="sigv ${s.type||'neu'}">${s.value}</div></div></div>`;
   });
 
-  // Sources panel
-  const sources = data.sources_found || [];
-  if (sources.length > 0) {
-    document.getElementById('sources-panel').style.display = 'block';
-    const sl = document.getElementById('sources-list');
+  // Queries used
+  const qs = d.queries_used||[];
+  if (qs.length > 0) {
+    document.getElementById('q-wrap').style.display = 'block';
+    const qp = document.getElementById('qpills');
+    qp.innerHTML = '';
+    qs.forEach(q => { qp.innerHTML += `<span class="qpill">"${q}"</span>`; });
+  }
+
+  // Sources
+  const srcs = d.sources_found||[];
+  if (srcs.length > 0) {
+    document.getElementById('src-wrap').style.display = 'block';
+    const sl = document.getElementById('src-list');
     sl.innerHTML = '';
-    sources.forEach(s => {
-      const regionClass = s.is_factchecker ? 'factcheck' : s.is_nigerian ? 'nigeria' : '';
-      const relPct = Math.round((s.relevance || 0) * 100);
-      sl.innerHTML += `
-        <div class="source-item">
-          <span class="source-region ${regionClass}">${s.region}</span>
-          <div class="source-content">
-            <div class="source-name">${s.name || s.source}</div>
-            <div class="source-title">${s.title || 'No title'}</div>
-            ${s.snippet ? `<div class="source-snippet">${s.snippet}</div>` : ''}
-            <a class="source-link" href="${s.article_url || s.url}" target="_blank" rel="noopener">Read article →</a>
-            <div class="relevance-bar">
-              <div class="rel-track"><div class="rel-fill" style="width:${relPct}%"></div></div>
-              <span class="rel-label">Relevance: ${relPct}%</span>
-            </div>
-          </div>
-        </div>`;
+    srcs.forEach(s => {
+      const rc = s.is_factchecker ? 'fc' : s.is_nigerian ? 'ng' : '';
+      sl.innerHTML += `<div class="srcitem">
+        <span class="sreg ${rc}">${s.region}</span>
+        <div class="scont">
+          <div class="sname">${s.name}</div>
+          <div class="stitle">${s.title||'—'}</div>
+          ${s.snippet?`<div class="ssnip">${s.snippet}</div>`:''}
+          ${s.pubdate?`<div class="spub">${s.pubdate}</div>`:''}
+          <a class="slink" href="${s.article_url||s.url}" target="_blank" rel="noopener">Read article →</a>
+        </div>
+      </div>`;
     });
   } else {
-    document.getElementById('sources-panel').style.display = 'none';
+    document.getElementById('src-wrap').style.display = 'none';
   }
 
   rs.scrollIntoView({behavior:'smooth', block:'start'});
+  loadCounter();   // refresh counter after search
 }
 
-function animNum(el, from, to, dur, suffix='') {
+function animNum(el, from, to, dur, suf='') {
   const start = performance.now();
-  function update(now) {
-    const p = Math.min((now - start) / dur, 1);
-    el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))) + suffix;
+  (function update(now) {
+    const p = Math.min((now-start)/dur, 1);
+    el.textContent = Math.round(from + (to-from)*(1-Math.pow(1-p,3))) + suf;
     if (p < 1) requestAnimationFrame(update);
-  }
-  requestAnimationFrame(update);
+  })(performance.now());
 }
 
-function resetForm() {
-  document.getElementById('result-section').style.display = 'none';
-  document.getElementById('detector-card').style.display = 'block';
-  document.querySelector('.disclaimer').style.display = 'flex';
-  document.getElementById('article-text').value = '';
-  document.getElementById('article-url').value = '';
-  document.getElementById('char-count').textContent = '0 / 5000 characters';
-  document.getElementById('conf-fill').style.width = '0%';
-  document.getElementById('detector-card').scrollIntoView({behavior:'smooth', block:'start'});
+function reset() {
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('detector').style.display = 'block';
+  document.querySelector('.disc').style.display = 'flex';
+  document.getElementById('txt').value = '';
+  document.getElementById('urlInput').value = '';
+  document.getElementById('cc').textContent = '0 / 8000 characters';
+  document.getElementById('cfill').style.width = '0%';
+  document.getElementById('nli-wrap').style.display = 'none';
+  document.getElementById('q-wrap').style.display = 'none';
+  document.getElementById('src-wrap').style.display = 'none';
+  document.getElementById('fc-wrap').style.display = 'none';
+  document.getElementById('detector').scrollIntoView({behavior:'smooth', block:'start'});
 }
 </script>
 </body>
