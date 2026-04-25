@@ -3,499 +3,435 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TruthLens — Professional Fact Verification Hub | NOUN</title>
-<meta name="description" content="AI-powered fake news detection. Trusted by journalists and researchers worldwide. Built at NOUN Nigeria."/>
+<title>TruthLens — Global Fact Verification Hub | NOUN</title>
+<meta name="description" content="AI-powered fake news detection trusted by journalists worldwide. Built at NOUN Nigeria."/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --green:#0a4a2e;--green-mid:#1a7a4a;--green-bright:#22c55e;
-  --green-light:#bbf7d0;--green-pale:#f0fdf4;--white:#fff;
-  --off:#f8fffe;--soft:#e8f5ee;--text:#1f2937;--muted:#6b7280;
-  --gold:#d4af37;--red:#dc2626;--orange:#ea580c;--blue:#2563eb;
-  --r:18px;--shadow:0 24px 64px rgba(10,74,46,0.14);
+  --g:#0a4a2e;--gm:#1a7a4a;--gb:#22c55e;--gl:#bbf7d0;--gp:#f0fdf4;
+  --w:#fff;--off:#f8fffe;--soft:#e8f5ee;--tx:#1f2937;--mu:#6b7280;
+  --gold:#d4af37;--red:#dc2626;--ora:#ea580c;--blue:#2563eb;
+  --r:18px;--sh:0 24px 64px rgba(10,74,46,.14);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);overflow-x:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--tx);overflow-x:hidden}
 .bg{position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(34,197,94,.10),transparent 60%),
-             radial-gradient(ellipse 60% 50% at 90% 100%,rgba(10,74,46,.08),transparent 55%),var(--off)}
-.dots{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.25;
-  background-image:radial-gradient(circle,#22c55e 1px,transparent 1px);
-  background-size:38px 38px;
+  background:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(34,197,94,.09),transparent 60%),
+             radial-gradient(ellipse 60% 50% at 90% 100%,rgba(10,74,46,.07),transparent 55%),var(--off)}
+.dots{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.22;
+  background-image:radial-gradient(circle,#22c55e 1px,transparent 1px);background-size:38px 38px;
   mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent)}
 
 /* HEADER */
-header{position:sticky;top:0;z-index:100;background:var(--green);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 5vw;height:70px;box-shadow:0 4px 32px rgba(0,0,0,.2)}
-.logo{display:flex;align-items:center;gap:13px}
-.badge{width:44px;height:44px;border-radius:50%;background:var(--gold);
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Playfair Display',serif;font-weight:900;font-size:14px;
-  color:var(--green);box-shadow:0 0 0 3px rgba(212,175,55,.3)}
-.logo-txt h1{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--white);line-height:1}
-.logo-txt span{font-size:.65rem;color:var(--green-light);letter-spacing:.8px;text-transform:uppercase}
-.hdr-right{display:flex;align-items:center;gap:10px}
-.live{display:flex;align-items:center;gap:5px;background:rgba(34,197,94,.15);
-  border:1px solid rgba(34,197,94,.3);padding:4px 12px;border-radius:100px;
-  font-size:.65rem;color:var(--green-bright);font-weight:600}
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green-bright);animation:pulse 1.5s infinite}
-.hdr-tag{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--green-light);
-  border:1px solid rgba(187,247,208,.3);padding:4px 11px;border-radius:100px}
+header{position:sticky;top:0;z-index:100;background:var(--g);
+  display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:68px;
+  box-shadow:0 4px 32px rgba(0,0,0,.2)}
+.logo{display:flex;align-items:center;gap:12px}
+.badge{width:43px;height:43px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;font-size:13px;color:var(--g);box-shadow:0 0 0 3px rgba(212,175,55,.3)}
+.logo-txt h1{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--w);line-height:1}
+.logo-txt span{font-size:.63rem;color:var(--gl);letter-spacing:.8px;text-transform:uppercase}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.live{display:flex;align-items:center;gap:5px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);padding:4px 12px;border-radius:100px;font-size:.63rem;color:var(--gb);font-weight:600}
+.ld{width:6px;height:6px;border-radius:50%;background:var(--gb);animation:pulse 1.5s infinite}
+.htag{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--gl);border:1px solid rgba(187,247,208,.3);padding:4px 11px;border-radius:100px}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
 
-/* SEARCH COUNTER BAR */
-.counter-bar{position:relative;z-index:5;background:rgba(10,74,46,.96);
-  padding:8px 5vw;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
-.counter-item{display:flex;align-items:center;gap:8px}
-.counter-label{font-size:.68rem;color:var(--green-light);text-transform:uppercase;letter-spacing:.5px}
-.counter-track{width:100px;height:5px;background:rgba(255,255,255,.15);border-radius:100px;overflow:hidden}
-.counter-fill{height:100%;border-radius:100px;background:var(--green-bright);transition:width .8s ease}
-.counter-val{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--white);font-weight:700}
-.counter-divider{width:1px;height:20px;background:rgba(255,255,255,.15)}
-.cache-pill{background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.3);
-  padding:3px 10px;border-radius:100px;font-size:.65rem;color:var(--green-bright)}
+/* COUNTER BAR */
+.cbar{position:relative;z-index:5;background:rgba(10,74,46,.97);padding:7px 5vw;display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap}
+.ci{display:flex;align-items:center;gap:8px}
+.cl{font-size:.66rem;color:var(--gl);text-transform:uppercase;letter-spacing:.5px}
+.ct{width:90px;height:4px;background:rgba(255,255,255,.15);border-radius:100px;overflow:hidden}
+.cf{height:100%;border-radius:100px;background:var(--gb);transition:width .8s ease}
+.cv{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--w);font-weight:700}
+.cdiv{width:1px;height:18px;background:rgba(255,255,255,.15)}
+.cpill{background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.3);padding:3px 10px;border-radius:100px;font-size:.63rem;color:var(--gb)}
 
 /* HERO */
-.hero{position:relative;z-index:2;text-align:center;padding:64px 5vw 32px}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--green-pale);
-  border:1.5px solid var(--green-light);border-radius:100px;padding:6px 18px;
-  font-size:.73rem;font-weight:600;color:var(--green-mid);text-transform:uppercase;
-  letter-spacing:.5px;margin-bottom:18px;animation:fd .6s ease both}
-.hero h2{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5.5vw,4rem);
-  font-weight:900;color:var(--green);line-height:1.06;margin-bottom:14px;animation:fd .7s .1s ease both}
-.hero h2 em{font-style:normal;color:var(--green-mid);text-decoration:underline;
-  text-decoration-color:var(--green-bright);text-underline-offset:6px}
-.hero p{max-width:600px;margin:0 auto 32px;font-size:.97rem;color:var(--muted);
-  line-height:1.75;animation:fd .8s .2s ease both}
-@keyframes fd{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+.hero{position:relative;z-index:2;text-align:center;padding:60px 5vw 28px}
+.ey{display:inline-flex;align-items:center;gap:8px;background:var(--gp);border:1.5px solid var(--gl);border-radius:100px;padding:5px 17px;font-size:.71rem;font-weight:600;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;animation:fd .6s ease both}
+.hero h2{font-family:'Playfair Display',serif;font-size:clamp(2rem,5.5vw,3.8rem);font-weight:900;color:var(--g);line-height:1.06;margin-bottom:13px;animation:fd .7s .1s ease both}
+.hero h2 em{font-style:normal;color:var(--gm);text-decoration:underline;text-decoration-color:var(--gb);text-underline-offset:6px}
+.hero p{max-width:620px;margin:0 auto 30px;font-size:.96rem;color:var(--mu);line-height:1.75;animation:fd .8s .2s ease both}
+@keyframes fd{from{opacity:0;transform:translateY(-15px)}to{opacity:1;transform:translateY(0)}}
 
-/* STATS ROW */
-.stats{position:relative;z-index:2;max-width:800px;margin:0 auto 22px;
-  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;animation:fu .9s .3s ease both}
-.stat{background:var(--white);border:1.5px solid rgba(34,197,94,.13);border-radius:14px;
-  padding:14px;text-align:center;box-shadow:0 4px 14px rgba(10,74,46,.06)}
-.stat .sv{font-family:'Space Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--green)}
-.stat .sl{font-size:.7rem;color:var(--muted);margin-top:2px}
-@keyframes fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+/* PIPELINE PILLS */
+.pipeline{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin-bottom:30px;animation:fd .9s .3s ease both}
+.pp{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;background:var(--w);border:1.5px solid rgba(34,197,94,.18);border-radius:100px;font-size:.72rem;font-weight:600;color:var(--gm);box-shadow:0 2px 8px rgba(10,74,46,.06)}
 
-/* DETECTOR CARD */
-.card{position:relative;z-index:3;max-width:800px;margin:0 auto 48px;
-  background:var(--white);border-radius:26px;box-shadow:var(--shadow);
-  border:1.5px solid rgba(34,197,94,.13);overflow:hidden;animation:fu .9s .4s ease both}
-.card-head{background:linear-gradient(135deg,var(--green),var(--green-mid));
-  padding:18px 30px;display:flex;align-items:center;justify-content:space-between}
-.card-head h3{font-family:'Playfair Display',serif;font-size:.97rem;font-weight:700;color:var(--white)}
-.card-head span{font-family:'Space Mono',monospace;font-size:.63rem;color:var(--green-light);
-  background:rgba(255,255,255,.1);padding:3px 11px;border-radius:100px}
-.card-body{padding:26px 30px 30px}
-.tabs{display:flex;gap:4px;background:var(--soft);border-radius:12px;padding:4px;margin-bottom:16px}
-.tab{flex:1;padding:9px;border:none;cursor:pointer;border-radius:9px;background:transparent;
-  font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;color:var(--muted);transition:all .2s}
-.tab.active{background:var(--white);color:var(--green);box-shadow:0 2px 10px rgba(10,74,46,.1);font-weight:600}
-.panel{display:none}.panel.on{display:block}
-textarea,input[type=url]{width:100%;padding:14px 17px;border:2px solid var(--soft);border-radius:var(--r);
-  font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text);resize:none;outline:none;
-  transition:border-color .25s,box-shadow .25s;background:var(--off);line-height:1.6}
-textarea{height:135px}
-textarea:focus,input[type=url]:focus{border-color:var(--green-bright);box-shadow:0 0 0 4px rgba(34,197,94,.12);background:var(--white)}
-.ccount{text-align:right;margin-top:4px;font-size:.7rem;color:var(--muted);font-family:'Space Mono',monospace}
-.btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--green),var(--green-mid));
-  color:var(--white);border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;
-  font-size:.98rem;font-weight:600;cursor:pointer;transition:all .3s;
-  display:flex;align-items:center;justify-content:center;gap:9px;
-  position:relative;overflow:hidden;margin-top:16px}
-.btn::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,var(--green-mid),var(--green-bright));opacity:0;transition:opacity .3s}
+/* STATS */
+.stats{position:relative;z-index:2;max-width:800px;margin:0 auto 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;animation:fu .9s .3s ease both}
+.stat{background:var(--w);border:1.5px solid rgba(34,197,94,.12);border-radius:13px;padding:13px;text-align:center;box-shadow:0 4px 12px rgba(10,74,46,.05)}
+.sv{font-family:'Space Mono',monospace;font-size:1.15rem;font-weight:700;color:var(--g)}
+.sl{font-size:.69rem;color:var(--mu);margin-top:2px}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* DETECTOR */
+.det{position:relative;z-index:3;max-width:800px;margin:0 auto 44px;background:var(--w);border-radius:24px;box-shadow:var(--sh);border:1.5px solid rgba(34,197,94,.12);overflow:hidden;animation:fu .9s .4s ease both}
+.det-h{background:linear-gradient(135deg,var(--g),var(--gm));padding:17px 28px;display:flex;align-items:center;justify-content:space-between}
+.det-h h3{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:var(--w)}
+.det-h span{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--gl);background:rgba(255,255,255,.1);padding:3px 10px;border-radius:100px}
+.det-b{padding:24px 28px 28px}
+.tabs{display:flex;gap:4px;background:var(--soft);border-radius:11px;padding:4px;margin-bottom:15px}
+.tab{flex:1;padding:8px;border:none;cursor:pointer;border-radius:8px;background:transparent;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;color:var(--mu);transition:all .2s}
+.tab.on{background:var(--w);color:var(--g);box-shadow:0 2px 10px rgba(10,74,46,.09);font-weight:600}
+.pan{display:none}.pan.vis{display:block}
+textarea,input[type=url]{width:100%;padding:13px 16px;border:2px solid var(--soft);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:.91rem;color:var(--tx);resize:none;outline:none;transition:border-color .25s,box-shadow .25s;background:var(--off);line-height:1.6}
+textarea{height:130px}
+textarea:focus,input[type=url]:focus{border-color:var(--gb);box-shadow:0 0 0 4px rgba(34,197,94,.11);background:var(--w)}
+.cc{text-align:right;margin-top:4px;font-size:.69rem;color:var(--mu);font-family:'Space Mono',monospace}
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--g),var(--gm));color:var(--w);border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:.96rem;font-weight:600;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:9px;position:relative;overflow:hidden;margin-top:15px}
+.btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--gm),var(--gb));opacity:0;transition:opacity .3s}
 .btn:hover::before{opacity:1}
 .btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(10,74,46,.28)}
-.btn span,.bic{position:relative;z-index:1}
+.btn>*{position:relative;z-index:1}
 
 /* DISCLAIMER */
-.disc{position:relative;z-index:3;max-width:800px;margin:-28px auto 48px;
-  background:rgba(212,175,55,.07);border:1.5px solid rgba(212,175,55,.28);
-  border-radius:13px;padding:11px 17px;display:flex;gap:9px;align-items:flex-start}
-.disc span{font-size:.77rem;color:#92400e;line-height:1.5}
+.disc{position:relative;z-index:3;max-width:800px;margin:-26px auto 44px;background:rgba(212,175,55,.07);border:1.5px solid rgba(212,175,55,.27);border-radius:12px;padding:10px 16px;display:flex;gap:8px;align-items:flex-start}
+.disc span{font-size:.75rem;color:#92400e;line-height:1.5}
 
 /* LOADING */
-#loading{display:none;position:relative;z-index:3;max-width:800px;margin:0 auto 48px;
-  background:var(--white);border-radius:26px;box-shadow:var(--shadow);
-  border:1.5px solid rgba(34,197,94,.13);padding:48px 34px;text-align:center}
-.rings{width:88px;height:88px;margin:0 auto 22px;position:relative}
+#loading{display:none;position:relative;z-index:3;max-width:800px;margin:0 auto 44px;background:var(--w);border-radius:24px;box-shadow:var(--sh);border:1.5px solid rgba(34,197,94,.12);padding:44px 32px;text-align:center}
+.rings{width:84px;height:84px;margin:0 auto 20px;position:relative}
 .ring{position:absolute;inset:0;border-radius:50%;border:3px solid transparent;animation:spin 1.2s linear infinite}
-.ring:nth-child(1){border-top-color:var(--green-bright);border-right-color:var(--green-bright)}
-.ring:nth-child(2){inset:12px;border-bottom-color:var(--green-mid);border-left-color:var(--green-mid);animation-direction:reverse;animation-duration:.9s}
-.ring:nth-child(3){inset:24px;border-top-color:var(--gold);animation-duration:1.5s}
-.ring-core{position:absolute;inset:34px;border-radius:50%;background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.ring:nth-child(1){border-top-color:var(--gb);border-right-color:var(--gb)}
+.ring:nth-child(2){inset:11px;border-bottom-color:var(--gm);border-left-color:var(--gm);animation-direction:reverse;animation-duration:.9s}
+.ring:nth-child(3){inset:22px;border-top-color:var(--gold);animation-duration:1.5s}
+.rcore{position:absolute;inset:32px;border-radius:50%;background:var(--gp);display:flex;align-items:center;justify-content:center;font-size:.9rem}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.load-t{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--green);margin-bottom:3px}
-.load-s{font-size:.83rem;color:var(--muted);margin-bottom:20px}
-.steps{list-style:none;max-width:300px;margin:0 auto;text-align:left}
-.steps li{display:flex;align-items:center;gap:11px;padding:6px 0;
-  font-size:.83rem;color:var(--muted);border-bottom:1px solid var(--soft);transition:color .4s}
+.lt{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--g);margin-bottom:3px}
+.ls{font-size:.82rem;color:var(--mu);margin-bottom:18px}
+.steps{list-style:none;max-width:290px;margin:0 auto;text-align:left}
+.steps li{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:.81rem;color:var(--mu);border-bottom:1px solid var(--soft);transition:color .4s}
 .steps li:last-child{border-bottom:none}
-.sic{width:21px;height:21px;border-radius:50%;flex-shrink:0;background:var(--soft);
-  display:flex;align-items:center;justify-content:center;font-size:.68rem;transition:background .4s}
-.steps li.done{color:var(--green-mid)}.steps li.done .sic{background:var(--green-bright)}
-.steps li.act{color:var(--green);font-weight:600}.steps li.act .sic{background:var(--gold);animation:pulse 1s infinite}
+.sic{width:20px;height:20px;border-radius:50%;flex-shrink:0;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:.66rem;transition:background .4s}
+.steps li.done{color:var(--gm)}.steps li.done .sic{background:var(--gb)}
+.steps li.act{color:var(--g);font-weight:600}.steps li.act .sic{background:var(--gold);animation:pulse 1s infinite}
 
 /* RESULT */
-#result{display:none;position:relative;z-index:3;max-width:800px;margin:0 auto 48px;animation:fu .6s ease both}
+#result{display:none;position:relative;z-index:3;max-width:800px;margin:0 auto 44px;animation:fu .6s ease both}
+.vban{border-radius:22px 22px 0 0;padding:28px 36px;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:18px}
+.vban.real{background:linear-gradient(135deg,var(--g),#155e3b)}
+.vban.fake{background:linear-gradient(135deg,#7f1d1d,#991b1b)}
+.vban.mixed,.vban.suspicious{background:linear-gradient(135deg,#78350f,#92400e)}
+.vban::after{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.05)}
+.vic{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0}
+.vtx h3{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
+.vtx h2{font-family:'Playfair Display',serif;font-size:clamp(1.4rem,3.5vw,2.2rem);font-weight:900;color:var(--w);line-height:1.1;margin-bottom:6px}
+.vtx p{font-size:.85rem;color:rgba(255,255,255,.82);line-height:1.6}
+.lbadges{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.lb{font-size:.63rem;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9)}
 
-.vbanner{border-radius:24px 24px 0 0;padding:30px 38px;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:20px}
-.vbanner.real{background:linear-gradient(135deg,var(--green),#155e3b)}
-.vbanner.fake{background:linear-gradient(135deg,#7f1d1d,#991b1b)}
-.vbanner.mixed,.vbanner.suspicious{background:linear-gradient(135deg,#78350f,#92400e)}
-.vbanner::after{content:'';position:absolute;top:-40px;right:-40px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.05)}
-.vic{width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:1.9rem;flex-shrink:0}
-.vtxt h3{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
-.vtxt h2{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,3.5vw,2.3rem);font-weight:900;color:var(--white);line-height:1.1;margin-bottom:7px}
-.vtxt p{font-size:.86rem;color:rgba(255,255,255,.8);line-height:1.6}
-.layer-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.lbadge{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:100px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9)}
+.confbar{background:var(--w);padding:16px 36px;border-left:1.5px solid var(--soft);border-right:1.5px solid var(--soft);display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.clbl{font-family:'Space Mono',monospace;font-size:.67rem;color:var(--mu);text-transform:uppercase;white-space:nowrap}
+.ctrk{flex:1;min-width:150px;height:7px;background:var(--soft);border-radius:100px;overflow:hidden}
+.cfil{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--gb),var(--gm));transition:width 1.3s cubic-bezier(.22,1,.36,1);width:0%}
+.cfil.d{background:linear-gradient(90deg,#f87171,var(--red))}
+.cfil.w{background:linear-gradient(90deg,#fb923c,var(--ora))}
+.csc{font-family:'Space Mono',monospace;font-size:1.05rem;font-weight:700;color:var(--g);white-space:nowrap}
+.csc.d{color:var(--red)}.csc.w{color:var(--ora)}
 
-.confbar{background:var(--white);padding:18px 38px;border-left:1.5px solid var(--soft);border-right:1.5px solid var(--soft);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.clabel{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted);text-transform:uppercase;white-space:nowrap}
-.ctrack{flex:1;min-width:160px;height:8px;background:var(--soft);border-radius:100px;overflow:hidden}
-.cfill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green-bright),var(--green-mid));transition:width 1.3s cubic-bezier(.22,1,.36,1);width:0%}
-.cfill.d{background:linear-gradient(90deg,#f87171,var(--red))}
-.cfill.w{background:linear-gradient(90deg,#fb923c,var(--orange))}
-.cscore{font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--green);white-space:nowrap}
-.cscore.d{color:var(--red)}.cscore.w{color:var(--orange)}
+.rbody{background:var(--w);border:1.5px solid var(--soft);border-top:none;border-radius:0 0 22px 22px;padding:24px 32px 32px}
+.rt{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:var(--g);margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.rt::before{content:'';display:inline-block;width:4px;height:16px;background:var(--gb);border-radius:2px;flex-shrink:0}
 
-.rbody{background:var(--white);border:1.5px solid var(--soft);border-top:none;border-radius:0 0 24px 24px;padding:26px 34px 34px}
-.rtitle{font-family:'Playfair Display',serif;font-size:.97rem;font-weight:700;color:var(--green);margin-bottom:12px;display:flex;align-items:center;gap:9px}
-.rtitle::before{content:'';display:inline-block;width:4px;height:17px;background:var(--green-bright);border-radius:2px;flex-shrink:0}
-
-/* CACHE NOTICE */
-.cache-notice{background:rgba(37,99,235,.06);border:1.5px solid rgba(37,99,235,.2);border-radius:12px;padding:10px 14px;margin-bottom:18px;display:none;font-size:.78rem;color:#1d4ed8;display:flex;align-items:center;gap:8px}
+/* PHI-3 REASONING PANEL */
+.phi-panel{background:linear-gradient(135deg,rgba(37,99,235,.04),rgba(37,99,235,.02));border:1.5px solid rgba(37,99,235,.18);border-radius:14px;padding:16px 18px;margin-bottom:20px}
+.phi-title{font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.phi-verdict{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-size:.72rem;font-weight:700;margin-bottom:10px}
+.phi-verdict.sup{background:rgba(34,197,94,.1);color:var(--gm)}
+.phi-verdict.con{background:rgba(220,38,38,.1);color:var(--red)}
+.phi-verdict.ins{background:rgba(107,114,128,.1);color:var(--mu)}
+.phi-reasoning{font-size:.83rem;color:var(--tx);line-height:1.7;background:var(--w);padding:12px 14px;border-radius:10px;border-left:3px solid var(--blue)}
 
 /* TIMESTAMP */
-.tsbar{background:var(--soft);border-radius:10px;padding:8px 13px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
-.tsi{font-family:'Space Mono',monospace;font-size:.67rem;color:var(--muted)}
-.tsi strong{color:var(--green)}
+.tsbar{background:var(--soft);border-radius:9px;padding:7px 12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px}
+.tsi{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--mu)}
+.tsi strong{color:var(--g)}
 
 /* PROBS */
-.probs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
-.pcard{background:var(--off);border:1.5px solid var(--soft);border-radius:13px;padding:13px;text-align:center}
-.pcard .pl{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
-.pcard .pv{font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700}
-.pcard.real .pv{color:var(--green-mid)}.pcard.fake .pv{color:var(--red)}
-
-/* NLI EVIDENCE PANEL */
-.nli-panel{background:rgba(37,99,235,.04);border:1.5px solid rgba(37,99,235,.18);border-radius:15px;padding:18px 20px;margin-bottom:22px}
-.nli-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:7px}
-.nli-scores{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.nli-score{text-align:center;padding:10px;background:var(--white);border-radius:10px;border:1px solid var(--soft)}
-.nli-score .ns-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
-.nli-score .ns-val{font-family:'Space Mono',monospace;font-size:1rem;font-weight:700}
-.ns-val.sup{color:var(--green-mid)}.ns-val.con{color:var(--red)}.ns-val.neu{color:var(--orange)}
-.evidence-list{display:flex;flex-direction:column;gap:8px}
-.evid-item{background:var(--white);border-radius:10px;padding:10px 13px;border-left:3px solid var(--soft)}
-.evid-item.supports{border-left-color:var(--green-bright)}
-.evid-item.contradicts{border-left-color:var(--red)}
-.evid-verdict{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.evid-item.supports .evid-verdict{color:var(--green-mid)}
-.evid-item.contradicts .evid-verdict{color:var(--red)}
-.evid-text{font-size:.8rem;color:var(--text);line-height:1.5}
+.probs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:20px}
+.pc{background:var(--off);border:1.5px solid var(--soft);border-radius:12px;padding:12px;text-align:center}
+.pc .pl{font-size:.69rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-bottom:3px}
+.pc .pv{font-family:'Space Mono',monospace;font-size:1.2rem;font-weight:700}
+.pc.real .pv{color:var(--gm)}.pc.fake .pv{color:var(--red)}
 
 /* ANALYSIS */
-#analysis-txt{font-size:.9rem;line-height:1.9;color:var(--text);background:var(--green-pale);
-  padding:16px 20px;border-radius:13px;border-left:4px solid var(--green-bright);
-  margin-bottom:22px;white-space:pre-wrap}
+#atxt{font-size:.89rem;line-height:1.9;color:var(--tx);background:var(--gp);padding:15px 18px;border-radius:12px;border-left:4px solid var(--gb);margin-bottom:20px;white-space:pre-wrap}
 
 /* SIGNALS */
-.sigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:9px;margin-bottom:22px}
-.sig{background:var(--off);border:1.5px solid var(--soft);border-radius:13px;padding:11px 13px;display:flex;align-items:flex-start;gap:9px}
-.sigi{font-size:1.1rem;flex-shrink:0;margin-top:1px}
-.sigl{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px}
-.sigv{font-size:.83rem;font-weight:600}
-.sigv.pos{color:var(--green-mid)}.sigv.neg{color:var(--red)}.sigv.neu{color:var(--orange)}
+.sigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(182px,1fr));gap:8px;margin-bottom:20px}
+.sig{background:var(--off);border:1.5px solid var(--soft);border-radius:12px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px}
+.si{font-size:1.05rem;flex-shrink:0;margin-top:1px}
+.sl2{font-size:.69rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-bottom:2px}
+.sv2{font-size:.81rem;font-weight:600}
+.sv2.pos{color:var(--gm)}.sv2.neg{color:var(--red)}.sv2.neu{color:var(--ora)}
 
 /* FACT CHECKERS */
-.fcpanel{background:rgba(220,38,38,.04);border:1.5px solid rgba(220,38,38,.15);border-radius:14px;padding:16px 18px;margin-bottom:22px}
-.fctitle{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:11px;display:flex;align-items:center;gap:7px}
-.fcitem{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid rgba(220,38,38,.1)}
-.fcitem:last-child{border-bottom:none;padding-bottom:0}
-.fcbadge{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(220,38,38,.1);color:var(--red);white-space:nowrap;flex-shrink:0}
-.fccontent{flex:1}
-.fcsrc{font-size:.73rem;font-weight:700;color:var(--red);margin-bottom:2px}
-.fchd{font-size:.81rem;color:var(--text);line-height:1.4;margin-bottom:3px}
-.fclink{font-size:.73rem;color:var(--green-mid);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px}
-.fclink:hover{text-decoration:underline}
+.fcp{background:rgba(220,38,38,.04);border:1.5px solid rgba(220,38,38,.14);border-radius:13px;padding:15px 17px;margin-bottom:20px}
+.fct{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.fci{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(220,38,38,.1)}
+.fci:last-child{border-bottom:none;padding-bottom:0}
+.fcb{font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:100px;background:rgba(220,38,38,.1);color:var(--red);white-space:nowrap;flex-shrink:0}
+.fcc{flex:1}.fcs{font-size:.71rem;font-weight:700;color:var(--red);margin-bottom:2px}
+.fch{font-size:.8rem;color:var(--tx);line-height:1.4;margin-bottom:3px}
+.fcl{font-size:.71rem;color:var(--gm);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+.fcl:hover{text-decoration:underline}
 
 /* SOURCES */
-.src-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
-.srcitem{background:var(--off);border:1.5px solid var(--soft);border-radius:11px;padding:11px 14px;display:flex;align-items:flex-start;gap:11px;transition:border-color .2s}
-.srcitem:hover{border-color:var(--green-bright)}
-.sreg{font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--green-pale);color:var(--green-mid);white-space:nowrap;flex-shrink:0;margin-top:1px}
+.srcg{display:flex;flex-direction:column;gap:7px;margin-bottom:20px}
+.src{background:var(--off);border:1.5px solid var(--soft);border-radius:10px;padding:10px 13px;display:flex;align-items:flex-start;gap:10px;transition:border-color .2s}
+.src:hover{border-color:var(--gb)}
+.sreg{font-size:.64rem;font-weight:700;padding:2px 7px;border-radius:100px;background:var(--gp);color:var(--gm);white-space:nowrap;flex-shrink:0;margin-top:1px}
 .sreg.fc{background:rgba(220,38,38,.08);color:var(--red)}
-.sreg.ng{background:rgba(34,197,94,.12);color:var(--green)}
-.scont{flex:1;min-width:0}
-.sname{font-size:.78rem;font-weight:700;color:var(--green);margin-bottom:2px}
-.stitle{font-size:.81rem;color:var(--text);line-height:1.4;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ssnip{font-size:.73rem;color:var(--muted);line-height:1.4;margin-bottom:4px}
-.spub{font-size:.68rem;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:3px}
-.slink{font-size:.73rem;color:var(--green-mid);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px}
-.slink:hover{text-decoration:underline}
+.sreg.ng{background:rgba(34,197,94,.11);color:var(--g)}
+.sc{flex:1;min-width:0}
+.sn{font-size:.77rem;font-weight:700;color:var(--g);margin-bottom:2px}
+.st{font-size:.8rem;color:var(--tx);line-height:1.4;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss{font-size:.72rem;color:var(--mu);line-height:1.4;margin-bottom:3px}
+.spub{font-size:.66rem;color:var(--mu);font-family:'Space Mono',monospace;margin-bottom:3px}
+.sl3{font-size:.72rem;color:var(--gm);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+.sl3:hover{text-decoration:underline}
 
-/* QUERIES USED */
-.queries-panel{background:var(--soft);border-radius:11px;padding:12px 14px;margin-bottom:22px}
-.qptitle{font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.5px;margin-bottom:7px}
-.qpills{display:flex;flex-wrap:wrap;gap:6px}
-.qpill{font-size:.74rem;background:var(--white);border:1.5px solid rgba(34,197,94,.2);border-radius:100px;padding:4px 11px;color:var(--green-mid);font-weight:500}
+/* QUERIES */
+.qp{background:var(--soft);border-radius:10px;padding:11px 13px;margin-bottom:20px}
+.qt{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--mu);letter-spacing:.5px;margin-bottom:6px}
+.qpills{display:flex;flex-wrap:wrap;gap:5px}
+.qpill{font-size:.72rem;background:var(--w);border:1.5px solid rgba(34,197,94,.18);border-radius:100px;padding:3px 10px;color:var(--gm);font-weight:500}
 
-/* JOURNALIST TOOLS */
-.jtpanel{background:linear-gradient(135deg,rgba(10,74,46,.04),rgba(34,197,94,.04));border:1.5px solid rgba(34,197,94,.15);border-radius:14px;padding:16px 18px;margin-bottom:22px}
-.jttitle{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:11px;display:flex;align-items:center;gap:7px}
-.jtlinks{display:flex;flex-wrap:wrap;gap:7px}
-.jtlink{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;background:var(--white);border:1.5px solid var(--soft);border-radius:100px;font-size:.76rem;font-weight:600;color:var(--green-mid);text-decoration:none;transition:all .2s}
-.jtlink:hover{border-color:var(--green-bright);background:var(--green-pale);transform:translateY(-1px)}
+/* JOURNALIST */
+.jtp{background:linear-gradient(135deg,rgba(10,74,46,.04),rgba(34,197,94,.03));border:1.5px solid rgba(34,197,94,.14);border-radius:13px;padding:15px 17px;margin-bottom:20px}
+.jtt{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--g);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.jtls{display:flex;flex-wrap:wrap;gap:6px}
+.jtl{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--w);border:1.5px solid var(--soft);border-radius:100px;font-size:.74rem;font-weight:600;color:var(--gm);text-decoration:none;transition:all .2s}
+.jtl:hover{border-color:var(--gb);background:var(--gp);transform:translateY(-1px)}
 
-.reset-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
-  padding:13px;border:2px solid var(--green-bright);border-radius:var(--r);background:transparent;
-  color:var(--green-mid);font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:600;cursor:pointer;transition:all .25s}
-.reset-btn:hover{background:var(--green-pale);transform:translateY(-2px)}
+.reset{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:12px;border:2px solid var(--gb);border-radius:var(--r);background:transparent;color:var(--gm);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .25s}
+.reset:hover{background:var(--gp);transform:translateY(-2px)}
 
-/* INFO ROW */
-.inforow{position:relative;z-index:2;max-width:800px;margin:0 auto 40px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.icard{background:var(--white);border-radius:16px;padding:20px;border:1.5px solid rgba(34,197,94,.11);box-shadow:0 4px 14px rgba(10,74,46,.05);text-align:center;transition:transform .2s,box-shadow .2s}
-.icard:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
-.icard .ic{font-size:1.7rem;margin-bottom:7px;display:block}
-.icard h4{font-family:'Playfair Display',serif;font-size:.88rem;font-weight:700;color:var(--green);margin-bottom:3px}
-.icard p{font-size:.73rem;color:var(--muted);line-height:1.5}
+/* INFO */
+.inforow{position:relative;z-index:2;max-width:800px;margin:0 auto 38px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.ic2{background:var(--w);border-radius:15px;padding:18px;border:1.5px solid rgba(34,197,94,.1);box-shadow:0 4px 12px rgba(10,74,46,.05);text-align:center;transition:transform .2s,box-shadow .2s}
+.ic2:hover{transform:translateY(-4px);box-shadow:var(--sh)}
+.ic2 .ico{font-size:1.6rem;margin-bottom:6px;display:block}
+.ic2 h4{font-family:'Playfair Display',serif;font-size:.86rem;font-weight:700;color:var(--g);margin-bottom:3px}
+.ic2 p{font-size:.72rem;color:var(--mu);line-height:1.5}
 
 /* FOOTER */
-footer{position:relative;z-index:2;background:var(--green);padding:34px 5vw 22px;text-align:center}
-footer .fl{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--white);margin-bottom:2px}
-footer .fs{font-size:.68rem;color:var(--green-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:18px}
-.fcreds{display:flex;flex-wrap:wrap;justify-content:center;gap:5px 18px;margin-bottom:14px}
-.fcreds p{font-size:.8rem;color:rgba(255,255,255,.75)}
-.fcreds a{color:var(--green-bright);text-decoration:none;font-weight:600;transition:color .2s}
-.fcreds a:hover{color:var(--gold);text-decoration:underline}
-.fdiv{width:55px;height:2px;background:rgba(255,255,255,.12);margin:0 auto 12px;border-radius:2px}
-footer .fc{font-size:.7rem;color:rgba(255,255,255,.38)}
+footer{position:relative;z-index:2;background:var(--g);padding:30px 5vw 20px;text-align:center}
+footer .fl{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:900;color:var(--w);margin-bottom:2px}
+footer .fs{font-size:.66rem;color:var(--gl);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+.fcreds{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin-bottom:12px}
+.fcreds p{font-size:.78rem;color:rgba(255,255,255,.72)}
+.fcreds a{color:var(--gb);text-decoration:none;font-weight:600;transition:color .2s}
+.fcreds a:hover{color:var(--gold)}
+.fdiv{width:50px;height:2px;background:rgba(255,255,255,.12);margin:0 auto 11px;border-radius:2px}
+footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
 
-.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);
-  background:var(--green);color:var(--white);padding:11px 22px;border-radius:100px;
-  font-size:.81rem;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.22);
-  z-index:999;transition:transform .4s cubic-bezier(.22,1,.36,1);white-space:nowrap}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--g);color:var(--w);padding:10px 20px;border-radius:100px;font-size:.79rem;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.22);z-index:999;transition:transform .4s cubic-bezier(.22,1,.36,1);white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
+/* CACHE NOTICE */
+.cache-notice{background:rgba(37,99,235,.06);border:1.5px solid rgba(37,99,235,.2);border-radius:11px;padding:9px 13px;margin-bottom:16px;font-size:.76rem;color:#1d4ed8;display:none;align-items:center;gap:7px}
+
 @media(max-width:640px){
-  .card-body{padding:18px 16px 22px}.rbody{padding:20px 18px 24px}
-  .vbanner{padding:22px 20px;flex-direction:column}.confbar{padding:14px 20px}
+  .det-b{padding:18px 16px 22px}.rbody{padding:20px 18px 24px}
+  .vban{padding:22px 20px;flex-direction:column}.confbar{padding:14px 20px}
   .inforow{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}
   .sigs{grid-template-columns:1fr 1fr}.probs{grid-template-columns:1fr 1fr}
-  .nli-scores{grid-template-columns:1fr 1fr 1fr}
-  header{padding:0 4vw}.hdr-tag{display:none}
+  header{padding:0 4vw}.htag{display:none}.pipeline{padding:0 4vw}
 }
 </style>
 </head>
 <body>
-<div class="bg"></div>
-<div class="dots"></div>
+<div class="bg"></div><div class="dots"></div>
 
 <header>
   <div class="logo">
     <div class="badge">NOUN</div>
-    <div class="logo-txt">
-      <h1>TruthLens</h1>
-      <span>National Open University of Nigeria</span>
-    </div>
+    <div class="logo-txt"><h1>TruthLens</h1><span>National Open University of Nigeria</span></div>
   </div>
-  <div class="hdr-right">
-    <div class="live"><span class="live-dot"></span>LIVE</div>
-    <div class="hdr-tag">Global Fact Hub</div>
+  <div class="hdr-r">
+    <div class="live"><span class="ld"></span>LIVE</div>
+    <div class="htag">Global Fact Hub</div>
   </div>
 </header>
 
-<!-- SEARCH COUNTER BAR -->
-<div class="counter-bar">
-  <div class="counter-item">
-    <span class="counter-label">Searches Today</span>
-    <div class="counter-track"><div class="counter-fill" id="cFill" style="width:0%"></div></div>
-    <span class="counter-val" id="cVal">Loading…</span>
+<div class="cbar">
+  <div class="ci">
+    <span class="cl">Searches Today</span>
+    <div class="ct"><div class="cf" id="cFill" style="width:0%"></div></div>
+    <span class="cv" id="cVal">—</span>
   </div>
-  <div class="counter-divider"></div>
-  <div class="counter-item">
-    <span class="counter-label">Cache Hits</span>
-    <span class="counter-val" id="cCache">—</span>
-  </div>
-  <div class="counter-divider"></div>
-  <span class="cache-pill">⚡ Repeat claims served instantly from cache</span>
+  <div class="cdiv"></div>
+  <div class="ci"><span class="cl">Cache Hits</span><span class="cv" id="cCache">—</span></div>
+  <div class="cdiv"></div>
+  <span class="cpill">⚡ Repeat claims served instantly</span>
 </div>
 
 <section class="hero">
-  <div class="eyebrow"><span class="live-dot"></span>Research Project · NOUN 2025</div>
+  <div class="ey"><span class="ld"></span>Research Project · NOUN 2025</div>
   <h2>The World's<br/><em>Fact Verification Hub</em></h2>
-  <p>Trusted by journalists and researchers globally. Our 6-layer AI pipeline — DistilBERT + Query Expansion + Google News + Article Scraping + FAISS Vector Search + NLI Evidence Verification — delivers the most accurate verdict possible on any news claim, anywhere in the world.</p>
+  <p>Trusted by journalists and researchers globally. Our pipeline searches the web in real-time, scrapes and <strong>reads full articles</strong>, then uses Phi-3-mini AI to reason and understand what the articles actually say — not just keyword matching.</p>
 </section>
+
+<div class="pipeline">
+  <div class="pp">🤖 DistilBERT</div>
+  <div class="pp">🔍 DuckDuckGo</div>
+  <div class="pp">📰 Google News</div>
+  <div class="pp">📄 Article Scraping</div>
+  <div class="pp">🧠 Phi-3 Reasoning</div>
+  <div class="pp">⚖️ Smart Fusion</div>
+</div>
 
 <div class="stats">
   <div class="stat"><div class="sv">6</div><div class="sl">AI Layers</div></div>
   <div class="stat"><div class="sv">60+</div><div class="sl">Outlets</div></div>
   <div class="stat"><div class="sv">8</div><div class="sl">Fact Checkers</div></div>
-  <div class="stat"><div class="sv">99%</div><div class="sl">Accuracy</div></div>
+  <div class="stat"><div class="sv">99%</div><div class="sl">Target Accuracy</div></div>
 </div>
 
-<div class="card" id="detector">
-  <div class="card-head">
+<div class="det" id="detector">
+  <div class="det-h">
     <h3>🔍 News Verification Engine</h3>
-    <span>6-Layer AI + RAG + NLI</span>
+    <span>Reads &amp; Reasons — Not Just Keywords</span>
   </div>
-  <div class="card-body">
+  <div class="det-b">
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('text')">📝 Paste Headline / Article</button>
-      <button class="tab" onclick="switchTab('url')">🔗 Article URL</button>
+      <button class="tab on" onclick="sw('text')">📝 Paste Headline / Article</button>
+      <button class="tab" onclick="sw('url')">🔗 Article URL</button>
     </div>
-    <div id="p-text" class="panel on">
-      <textarea id="txt" placeholder="Paste your news headline or full article here for verification…" oninput="cc(this)"></textarea>
-      <div class="ccount" id="cc">0 / 8000 characters</div>
+    <div id="pt" class="pan vis">
+      <textarea id="txt" placeholder="Paste your news headline or full article here…" oninput="countc(this)"></textarea>
+      <div class="cc" id="cc">0 / 8000</div>
     </div>
-    <div id="p-url" class="panel">
-      <input type="url" id="urlInput" placeholder="https://example.com/news-article"/>
-      <div style="margin-top:6px;font-size:.74rem;color:var(--muted)">Enter the full URL of the article to verify.</div>
+    <div id="pu" class="pan">
+      <input type="url" id="urlinp" placeholder="https://example.com/news-article"/>
+      <div style="margin-top:5px;font-size:.73rem;color:var(--mu)">Enter the full URL of the article to verify.</div>
     </div>
     <button class="btn" onclick="analyse()">
-      <span class="bic">⚡</span><span>Verify This Content — Full 6-Layer Analysis</span>
+      <span>⚡</span><span>Verify — Full AI Pipeline</span>
     </button>
   </div>
 </div>
 
 <div class="disc">
   <span>⚠️</span>
-  <span><strong>Journalist Note:</strong> TruthLens uses AI + real-time web search + NLI evidence matching. Always corroborate with primary sources and editorial judgement. Not a substitute for professional fact-checking.</span>
+  <span><strong>Journalist Note:</strong> TruthLens uses AI + real-time web search + article reading + LLM reasoning. Always corroborate with primary sources and editorial judgement.</span>
 </div>
 
-<!-- LOADING -->
 <div id="loading">
   <div class="rings">
     <div class="ring"></div><div class="ring"></div><div class="ring"></div>
-    <div class="ring-core">🔍</div>
+    <div class="rcore">🔍</div>
   </div>
-  <div class="load-t">Running 6-Layer Verification…</div>
-  <div class="load-s" id="load-sub">Initialising pipeline</div>
+  <div class="lt">Running Full Pipeline…</div>
+  <div class="ls" id="lsub">Initialising</div>
   <ul class="steps" id="steps">
-    <li id="s1"><div class="sic">→</div>Layer 1: AI linguistic analysis</li>
-    <li id="s2"><div class="sic">→</div>Layer 2: Generating search queries</li>
-    <li id="s3"><div class="sic">→</div>Layer 3: Searching 60+ global outlets</li>
-    <li id="s4"><div class="sic">→</div>Layer 4: Scraping article content</li>
-    <li id="s5"><div class="sic">→</div>Layer 5: FAISS vector similarity search</li>
-    <li id="s6"><div class="sic">→</div>Layer 6: NLI evidence verification</li>
-    <li id="s7"><div class="sic">→</div>Generating final verdict</li>
+    <li id="s1"><div class="sic">→</div>DistilBERT linguistic analysis</li>
+    <li id="s2"><div class="sic">→</div>Generating search queries</li>
+    <li id="s3"><div class="sic">→</div>DuckDuckGo + Google News search</li>
+    <li id="s4"><div class="sic">→</div>Scraping full article text</li>
+    <li id="s5"><div class="sic">→</div>Phi-3 reading and reasoning</li>
+    <li id="s6"><div class="sic">→</div>Generating final verdict</li>
   </ul>
 </div>
 
-<!-- RESULT -->
 <div id="result">
-  <div class="vbanner" id="vbanner">
+  <div class="vban" id="vban">
     <div class="vic" id="vic">✅</div>
-    <div class="vtxt">
+    <div class="vtx">
       <h3>TruthLens Verdict</h3>
-      <h2 id="vtitle">—</h2>
-      <p id="vsub">—</p>
-      <div class="layer-badges" id="lbadges"></div>
+      <h2 id="vt">—</h2>
+      <p id="vs">—</p>
+      <div class="lbadges" id="lbs"></div>
     </div>
   </div>
   <div class="confbar">
-    <span class="clabel">Confidence</span>
-    <div class="ctrack"><div class="cfill" id="cfill"></div></div>
-    <span class="cscore" id="cscore">0%</span>
+    <span class="clbl">Confidence</span>
+    <div class="ctrk"><div class="cfil" id="cfil"></div></div>
+    <span class="csc" id="csc">0%</span>
   </div>
   <div class="rbody">
+    <div class="cache-notice" id="cn">⚡ Served from cache — verified within last 6 hours.</div>
 
-    <!-- Cache notice -->
-    <div class="cache-notice" id="cache-notice">⚡ Served from cache — this claim was recently verified. Results are up to 6 hours old.</div>
-
-    <!-- Timestamp -->
     <div class="tsbar">
-      <span class="tsi">Verified: <strong id="ts-time">—</strong></span>
-      <span class="tsi">Outlets searched: <strong id="ts-src">60+</strong></span>
-      <span class="tsi">Articles scraped: <strong id="ts-scrape">—</strong></span>
-      <span class="tsi">Evidence chunks: <strong id="ts-chunks">—</strong></span>
+      <span class="tsi">Verified: <strong id="tstime">—</strong></span>
+      <span class="tsi">Sources: <strong id="tssrc">—</strong></span>
+      <span class="tsi">Articles read: <strong id="tsart">—</strong></span>
     </div>
 
-    <!-- Probs -->
-    <h4 class="rtitle">Probability Breakdown</h4>
+    <h4 class="rt">Probability Breakdown</h4>
     <div class="probs">
-      <div class="pcard real"><div class="pl">Real Probability</div><div class="pv" id="rprob">—</div></div>
-      <div class="pcard fake"><div class="pl">Fake Probability</div><div class="pv" id="fprob">—</div></div>
+      <div class="pc real"><div class="pl">Real Probability</div><div class="pv" id="rp">—</div></div>
+      <div class="pc fake"><div class="pl">Fake Probability</div><div class="pv" id="fp">—</div></div>
     </div>
 
-    <!-- NLI Evidence -->
-    <div id="nli-wrap" style="display:none">
-      <h4 class="rtitle">NLI Evidence Analysis</h4>
-      <div class="nli-panel">
-        <div class="nli-title">🧠 Cross-Encoder Evidence Verification (DeBERTa)</div>
-        <div class="nli-scores">
-          <div class="nli-score"><div class="ns-label">Supports Claim</div><div class="ns-val sup" id="nli-sup">—</div></div>
-          <div class="nli-score"><div class="ns-label">Contradicts</div><div class="ns-val con" id="nli-con">—</div></div>
-          <div class="nli-score"><div class="ns-label">Neutral</div><div class="ns-val neu" id="nli-neu">—</div></div>
-        </div>
-        <div class="evidence-list" id="evid-list"></div>
+    <!-- PHI-3 REASONING -->
+    <div id="phi-wrap" style="display:none">
+      <h4 class="rt">🧠 Phi-3 AI Reading & Reasoning</h4>
+      <div class="phi-panel">
+        <div class="phi-title">🧠 Phi-3-mini-128k Read the Articles and Reasoned:</div>
+        <div class="phi-verdict" id="phi-badge">—</div>
+        <div class="phi-reasoning" id="phi-text">—</div>
       </div>
     </div>
 
-    <!-- Fact checkers -->
-    <div id="fc-wrap" style="display:none">
-      <h4 class="rtitle">Fact-Checker Results</h4>
-      <div class="fcpanel">
-        <div class="fctitle">🔬 Independent Fact-Checkers</div>
-        <div id="fc-list"></div>
+    <!-- FACT CHECKERS -->
+    <div id="fcw" style="display:none">
+      <h4 class="rt">Fact-Checker Results</h4>
+      <div class="fcp">
+        <div class="fct">🔬 Independent Fact-Checkers</div>
+        <div id="fcl"></div>
       </div>
     </div>
 
-    <!-- Analysis -->
-    <h4 class="rtitle">Detailed Analysis</h4>
-    <div id="analysis-txt"></div>
+    <h4 class="rt">Detailed Analysis</h4>
+    <div id="atxt"></div>
 
-    <!-- Signals -->
-    <h4 class="rtitle">Signal Breakdown</h4>
+    <h4 class="rt">Signal Breakdown</h4>
     <div class="sigs" id="sigs"></div>
 
-    <!-- Queries used -->
-    <div id="q-wrap" style="display:none">
-      <h4 class="rtitle">Search Queries Used</h4>
-      <div class="queries-panel">
-        <div class="qptitle">🔍 Query Expansion</div>
+    <!-- QUERIES -->
+    <div id="qw" style="display:none">
+      <h4 class="rt">Search Queries Used</h4>
+      <div class="qp">
+        <div class="qt">🔍 Query Expansion</div>
         <div class="qpills" id="qpills"></div>
       </div>
     </div>
 
-    <!-- Sources -->
-    <div id="src-wrap" style="display:none">
-      <h4 class="rtitle">Sources Found in Real-Time</h4>
-      <div class="src-grid" id="src-list"></div>
+    <!-- SOURCES -->
+    <div id="srcw" style="display:none">
+      <h4 class="rt">Sources Found in Real-Time</h4>
+      <div class="srcg" id="srcl"></div>
     </div>
 
-    <!-- Journalist tools -->
-    <h4 class="rtitle">Verify Further</h4>
-    <div class="jtpanel">
-      <div class="jttitle">🔗 Cross-Reference Fact-Checkers</div>
-      <div class="jtlinks">
-        <a class="jtlink" href="https://dubawa.org" target="_blank" rel="noopener">🇳🇬 Dubawa.org</a>
-        <a class="jtlink" href="https://africacheck.org" target="_blank" rel="noopener">🌍 AfricaCheck</a>
-        <a class="jtlink" href="https://snopes.com" target="_blank" rel="noopener">🌐 Snopes</a>
-        <a class="jtlink" href="https://factcheck.org" target="_blank" rel="noopener">🌐 FactCheck.org</a>
-        <a class="jtlink" href="https://pesacheck.org" target="_blank" rel="noopener">🌍 PesaCheck</a>
-        <a class="jtlink" href="https://reuters.com/fact-check" target="_blank" rel="noopener">📰 Reuters FC</a>
-        <a class="jtlink" href="https://apnews.com/hub/ap-fact-check" target="_blank" rel="noopener">📰 AP Fact Check</a>
-        <a class="jtlink" href="https://bbc.com/news/reality-check" target="_blank" rel="noopener">📰 BBC Reality Check</a>
-        <a class="jtlink" href="https://fullfact.org" target="_blank" rel="noopener">🌐 Full Fact</a>
-        <a class="jtlink" href="https://boomlive.in" target="_blank" rel="noopener">🌏 BoomLive</a>
+    <!-- JOURNALIST TOOLS -->
+    <h4 class="rt">Verify Further</h4>
+    <div class="jtp">
+      <div class="jtt">🔗 Cross-Reference Fact-Checkers</div>
+      <div class="jtls">
+        <a class="jtl" href="https://dubawa.org" target="_blank" rel="noopener">🇳🇬 Dubawa</a>
+        <a class="jtl" href="https://africacheck.org" target="_blank" rel="noopener">🌍 AfricaCheck</a>
+        <a class="jtl" href="https://snopes.com" target="_blank" rel="noopener">🌐 Snopes</a>
+        <a class="jtl" href="https://factcheck.org" target="_blank" rel="noopener">🌐 FactCheck.org</a>
+        <a class="jtl" href="https://pesacheck.org" target="_blank" rel="noopener">🌍 PesaCheck</a>
+        <a class="jtl" href="https://reuters.com/fact-check" target="_blank" rel="noopener">📰 Reuters FC</a>
+        <a class="jtl" href="https://apnews.com/hub/ap-fact-check" target="_blank" rel="noopener">📰 AP Fact Check</a>
+        <a class="jtl" href="https://bbc.com/news/reality-check" target="_blank" rel="noopener">📰 BBC Reality</a>
+        <a class="jtl" href="https://fullfact.org" target="_blank" rel="noopener">🌐 Full Fact</a>
+        <a class="jtl" href="https://boomlive.in" target="_blank" rel="noopener">🌏 BoomLive</a>
       </div>
     </div>
-
-    <button class="reset-btn" onclick="reset()">↩ Verify Another Article</button>
+    <button class="reset" onclick="resetForm()">↩ Verify Another Article</button>
   </div>
 </div>
 
 <div class="inforow">
-  <div class="icard"><span class="ic">🧠</span><h4>6-Layer AI Pipeline</h4><p>DistilBERT + Query Expansion + Google News + Article Scraping + FAISS + NLI DeBERTa for maximum accuracy.</p></div>
-  <div class="icard"><span class="ic">🌍</span><h4>Global Coverage</h4><p>Monitors 60+ outlets across Nigeria, Africa, Asia, Europe, Americas and 8 dedicated fact-checkers simultaneously.</p></div>
-  <div class="icard"><span class="ic">🎓</span><h4>Academic Research</h4><p>Built as postgraduate research at the National Open University of Nigeria — available for the world.</p></div>
+  <div class="ic2"><span class="ico">🧠</span><h4>Reads Full Articles</h4><p>Phi-3-mini AI scrapes and reads entire articles — not just headlines — then reasons about what they actually mean.</p></div>
+  <div class="ic2"><span class="ico">🌍</span><h4>Global Coverage</h4><p>Monitors 60+ outlets across Nigeria, Africa, Asia, Europe and Americas including 8 dedicated fact-checkers.</p></div>
+  <div class="ic2"><span class="ico">🎓</span><h4>NOUN Research</h4><p>Built as postgraduate research at the National Open University of Nigeria — open and free for the world.</p></div>
 </div>
 
 <footer>
@@ -508,269 +444,198 @@ footer .fc{font-size:.7rem;color:rgba(255,255,255,.38)}
   <div class="fdiv"></div>
   <div class="fc">© 2025 National Open University of Nigeria · Open to the world</div>
 </footer>
-
 <div class="toast" id="toast"></div>
 
 <script>
+// ── UPDATE THIS AFTER RAILWAY DEPLOYMENT ──
 const API = 'https://jabirkabir-truthlens-api.hf.space';
-const STEPS = ['s1','s2','s3','s4','s5','s6','s7'];
-const STEP_DELAYS = [700,900,2500,4000,5500,7000,8200];
+// Change to your Railway URL e.g:
+// const API = 'https://truthlens-production.up.railway.app';
 
-// Load counter on page load
-async function loadCounter() {
+const SID = ['s1','s2','s3','s4','s5','s6'];
+const SDEL = [600,1200,2800,4500,6500,8200];
+
+async function loadStats() {
   try {
-    const r = await fetch(`${API}/stats`);
-    const d = await r.json();
-    document.getElementById('cVal').textContent = `${d.searches} searches`;
-    document.getElementById('cCache').textContent = `${d.cache_hits} hits`;
-    const pct = Math.min(100, (d.searches / 200) * 100);
-    document.getElementById('cFill').style.width = pct + '%';
-  } catch(e) {
-    document.getElementById('cVal').textContent = 'API offline';
-  }
+    const d = await (await fetch(`${API}/stats`)).json();
+    document.getElementById('cVal').textContent = `${d.searches||0} searches`;
+    document.getElementById('cCache').textContent = `${d.cache_hits||0} hits`;
+    document.getElementById('cFill').style.width = Math.min(100,(d.searches||0)/200*100)+'%';
+  } catch { document.getElementById('cVal').textContent = 'offline'; }
 }
-loadCounter();
+loadStats();
 
-function switchTab(t) {
-  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active',(i===0&&t==='text')||(i===1&&t==='url')));
-  document.getElementById('p-text').classList.toggle('on', t==='text');
-  document.getElementById('p-url').classList.toggle('on', t==='url');
+function sw(t) {
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='text')||(i===1&&t==='url')));
+  document.getElementById('pt').classList.toggle('vis',t==='text');
+  document.getElementById('pu').classList.toggle('vis',t==='url');
 }
-
-function cc(el) {
-  const n = Math.min(el.value.length, 8000);
-  el.value = el.value.slice(0, 8000);
-  document.getElementById('cc').textContent = n + ' / 8000 characters';
+function countc(el){
+  el.value=el.value.slice(0,8000);
+  document.getElementById('cc').textContent=el.value.length+' / 8000';
 }
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-function animSteps(done) {
-  STEPS.forEach(id => { const el=document.getElementById(id); el.className=''; el.querySelector('.sic').textContent='→'; });
-  STEPS.forEach((id, i) => {
-    setTimeout(() => {
-      if (i > 0) {
-        const p = document.getElementById(STEPS[i-1]);
-        p.classList.remove('act'); p.classList.add('done'); p.querySelector('.sic').textContent='✓';
-      }
-      const el = document.getElementById(id);
-      el.classList.add('act');
-      document.getElementById('load-sub').textContent = el.textContent.trim();
-    }, STEP_DELAYS[i]);
+function animSteps(cb){
+  SID.forEach(id=>{const e=document.getElementById(id);e.className='';e.querySelector('.sic').textContent='→';});
+  SID.forEach((id,i)=>{
+    setTimeout(()=>{
+      if(i>0){const p=document.getElementById(SID[i-1]);p.classList.remove('act');p.classList.add('done');p.querySelector('.sic').textContent='✓';}
+      const e=document.getElementById(id);e.classList.add('act');
+      document.getElementById('lsub').textContent=e.textContent.trim();
+    },SDEL[i]);
   });
-  setTimeout(() => {
-    const last = document.getElementById(STEPS[STEPS.length-1]);
-    last.classList.remove('act'); last.classList.add('done'); last.querySelector('.sic').textContent='✓';
-    done();
-  }, STEP_DELAYS[STEPS.length-1] + 600);
+  setTimeout(()=>{
+    const last=document.getElementById(SID[SID.length-1]);
+    last.classList.remove('act');last.classList.add('done');last.querySelector('.sic').textContent='✓';
+    cb();
+  },SDEL[SID.length-1]+500);
 }
 
-async function analyse() {
-  const isUrl = document.querySelector('.tab.active').textContent.includes('URL');
-  const content = isUrl
-    ? document.getElementById('urlInput').value.trim()
-    : document.getElementById('txt').value.trim();
-  if (!content || content.length < 10) { toast('Please enter more text to verify.'); return; }
+async function analyse(){
+  const isUrl=document.querySelector('.tab.on').textContent.includes('URL');
+  const content=isUrl?document.getElementById('urlinp').value.trim():document.getElementById('txt').value.trim();
+  if(!content||content.length<10){showToast('Please enter more text to verify.');return;}
 
-  document.getElementById('detector').style.display = 'none';
-  document.querySelector('.disc').style.display = 'none';
-  document.getElementById('result').style.display = 'none';
-  document.getElementById('loading').style.display = 'block';
+  document.getElementById('detector').style.display='none';
+  document.querySelector('.disc').style.display='none';
+  document.getElementById('result').style.display='none';
+  document.getElementById('loading').style.display='block';
 
-  let apiDone = false, stepsDone = false, apiData = null;
+  let apiDone=false,stepsDone=false,apiData=null;
+  animSteps(()=>{stepsDone=true;if(apiDone)render(apiData);});
 
-  animSteps(() => { stepsDone = true; if (apiDone) render(apiData); });
-
-  try {
-    const res = await fetch(`${API}/analyse`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text: content.slice(0,8000)})
+  try{
+    const res=await fetch(`${API}/analyse`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:content.slice(0,8000)})
     });
-    if (!res.ok) throw new Error('HTTP '+res.status);
-    apiData = await res.json();
-  } catch(err) {
-    apiData = {
-      verdict:'MIXED', confidence:50,
-      verdict_title:'Connection Error',
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    apiData=await res.json();
+  }catch(e){
+    apiData={
+      verdict:'MIXED',confidence:50,verdict_title:'Connection Error',
       verdict_subtitle:'Could not reach TruthLens API.',
-      analysis:`Unable to connect to the API.\n\n1. Visit https://jabirkabir-truthlens-api.hf.space to wake the Space.\n2. Wait 30 seconds then try again.`,
+      analysis:`Unable to connect.\n\n1. The server may be starting up — wait 30 seconds and try again.\n2. Check your internet connection.`,
       signals:[
         {icon:'🌐',label:'Connection',value:'API unreachable',type:'neg'},
-        {icon:'💤',label:'HF Space',value:'May be sleeping',type:'neu'},
-        {icon:'🔁',label:'Action',value:'Wake Space & retry',type:'neu'},
-        {icon:'📡',label:'Network',value:'Check connection',type:'neg'},
-        {icon:'🧠',label:'NLI',value:'N/A',type:'neu'},
-        {icon:'🤖',label:'AI Model',value:'N/A',type:'neu'},
+        {icon:'🤖',label:'DistilBERT',value:'N/A',type:'neu'},
+        {icon:'🧠',label:'Phi-3',value:'N/A',type:'neu'},
+        {icon:'📰',label:'Articles',value:'N/A',type:'neu'},
+        {icon:'😱',label:'Tone',value:'N/A',type:'neu'},
+        {icon:'🎣',label:'Clickbait',value:'N/A',type:'neu'},
       ],
-      real_probability:0, fake_probability:0,
-      nli:{verdict:'insufficient',support:0,contradict:0,evidence:[]},
-      sources_found:[], fact_checks:[], queries_used:[],
-      articles_scraped:0, evidence_chunks:0, from_cache:false
+      real_probability:0,fake_probability:0,
+      phi3:{verdict:'',reasoning:'',confidence:0},
+      sources_found:[],fact_checks:[],queries_used:[],
+      articles_scraped:0,from_cache:false
     };
   }
-
-  apiDone = true;
-  if (stepsDone) render(apiData);
+  apiDone=true;if(stepsDone)render(apiData);
 }
 
-function render(d) {
-  document.getElementById('loading').style.display = 'none';
-  const rs = document.getElementById('result');
-  rs.style.display = 'block';
+function render(d){
+  document.getElementById('loading').style.display='none';
+  const rs=document.getElementById('result');rs.style.display='block';
 
-  const v = (d.verdict||'MIXED').toUpperCase();
-  const banner = document.getElementById('vbanner');
-  banner.className = 'vbanner';
-  if (v==='REAL')     { banner.classList.add('real'); document.getElementById('vic').textContent='✅'; document.getElementById('cfill').className='cfill'; document.getElementById('cscore').className='cscore'; }
-  else if (v==='FAKE'){ banner.classList.add('fake'); document.getElementById('vic').textContent='❌'; document.getElementById('cfill').className='cfill d'; document.getElementById('cscore').className='cscore d'; }
-  else                { banner.classList.add('mixed'); document.getElementById('vic').textContent='⚠️'; document.getElementById('cfill').className='cfill w'; document.getElementById('cscore').className='cscore w'; }
+  const v=(d.verdict||'MIXED').toUpperCase();
+  const ban=document.getElementById('vban');
+  ban.className='vban';
+  if(v==='REAL'){ban.classList.add('real');document.getElementById('vic').textContent='✅';document.getElementById('cfil').className='cfil';document.getElementById('csc').className='csc';}
+  else if(v==='FAKE'){ban.classList.add('fake');document.getElementById('vic').textContent='❌';document.getElementById('cfil').className='cfil d';document.getElementById('csc').className='csc d';}
+  else{ban.classList.add('mixed');document.getElementById('vic').textContent='⚠️';document.getElementById('cfil').className='cfil w';document.getElementById('csc').className='csc w';}
 
-  document.getElementById('vtitle').textContent = d.verdict_title||v;
-  document.getElementById('vsub').textContent   = d.verdict_subtitle||'';
+  document.getElementById('vt').textContent=d.verdict_title||v;
+  document.getElementById('vs').textContent=d.verdict_subtitle||'';
 
-  // Layer badges
-  const badges = document.getElementById('lbadges');
-  badges.innerHTML = '';
-  const layers = ['DistilBERT','Query Expansion','Google News','Article Scraping','FAISS','NLI DeBERTa'];
-  layers.forEach(l => { const b=document.createElement('span'); b.className='lbadge'; b.textContent='✓ '+l; badges.appendChild(b); });
-
-  // Confidence
-  const pct = Math.min(99, Math.max(38, d.confidence||50));
-  setTimeout(() => {
-    document.getElementById('cfill').style.width = pct+'%';
-    animNum(document.getElementById('cscore'), 0, pct, 1200, '%');
-  }, 100);
-
-  // Timestamp
-  document.getElementById('ts-time').textContent   = new Date().toLocaleString();
-  document.getElementById('ts-scrape').textContent = d.articles_scraped ?? '—';
-  document.getElementById('ts-chunks').textContent = d.evidence_chunks  ?? '—';
-
-  // Cache notice
-  const cn = document.getElementById('cache-notice');
-  cn.style.display = d.from_cache ? 'flex' : 'none';
-
-  // Probs
-  document.getElementById('rprob').textContent = d.real_probability!=null ? (d.real_probability*100).toFixed(1)+'%' : '—';
-  document.getElementById('fprob').textContent = d.fake_probability!=null ? (d.fake_probability*100).toFixed(1)+'%' : '—';
-
-  // NLI panel
-  const nli = d.nli||{};
-  if (nli.support > 0 || nli.contradict > 0) {
-    document.getElementById('nli-wrap').style.display = 'block';
-    document.getElementById('nli-sup').textContent = (nli.support||0)+'%';
-    document.getElementById('nli-con').textContent = (nli.contradict||0)+'%';
-    document.getElementById('nli-neu').textContent = Math.max(0, 100-(nli.support||0)-(nli.contradict||0))+'%';
-    const el = document.getElementById('evid-list');
-    el.innerHTML = '';
-    (nli.evidence||[]).forEach(e => {
-      const cls = e.verdict==='SUPPORTS' ? 'supports' : 'contradicts';
-      el.innerHTML += `<div class="evid-item ${cls}">
-        <div class="evid-verdict">${e.verdict} CLAIM — ${e.confidence}% confidence</div>
-        <div class="evid-text">"${e.text}"</div>
-      </div>`;
-    });
-  } else {
-    document.getElementById('nli-wrap').style.display = 'none';
-  }
-
-  // Fact checkers
-  const fcs = d.fact_checks||[];
-  if (fcs.length > 0) {
-    document.getElementById('fc-wrap').style.display = 'block';
-    const fl = document.getElementById('fc-list');
-    fl.innerHTML = '';
-    fcs.forEach(fc => {
-      const isFake = /false|fake|misleading|debunked|hoax/i.test(fc.title);
-      const isReal = /true|confirmed|verified|accurate/i.test(fc.title);
-      const badge  = isFake ? 'FALSE' : isReal ? 'VERIFIED' : 'CHECKED';
-      fl.innerHTML += `<div class="fcitem">
-        <span class="fcbadge">${badge}</span>
-        <div class="fccontent">
-          <div class="fcsrc">${fc.name}</div>
-          <div class="fchd">${fc.title}</div>
-          ${fc.snippet?`<div style="font-size:.73rem;color:var(--muted);margin-bottom:3px">${fc.snippet}</div>`:''}
-          <a class="fclink" href="${fc.article_url||fc.url}" target="_blank" rel="noopener">Read full fact check →</a>
-        </div>
-      </div>`;
-    });
-  } else {
-    document.getElementById('fc-wrap').style.display = 'none';
-  }
-
-  // Analysis
-  document.getElementById('analysis-txt').textContent = d.analysis||'';
-
-  // Signals
-  const sg = document.getElementById('sigs');
-  sg.innerHTML = '';
-  (d.signals||[]).forEach(s => {
-    sg.innerHTML += `<div class="sig"><div class="sigi">${s.icon||'📌'}</div><div><div class="sigl">${s.label}</div><div class="sigv ${s.type||'neu'}">${s.value}</div></div></div>`;
+  const lbs=document.getElementById('lbs');lbs.innerHTML='';
+  ['DistilBERT','DuckDuckGo','Article Scraping','Phi-3 Reasoning'].forEach(l=>{
+    const b=document.createElement('span');b.className='lb';b.textContent='✓ '+l;lbs.appendChild(b);
   });
 
-  // Queries used
-  const qs = d.queries_used||[];
-  if (qs.length > 0) {
-    document.getElementById('q-wrap').style.display = 'block';
-    const qp = document.getElementById('qpills');
-    qp.innerHTML = '';
-    qs.forEach(q => { qp.innerHTML += `<span class="qpill">"${q}"</span>`; });
-  }
+  const pct=Math.min(99,Math.max(38,d.confidence||50));
+  setTimeout(()=>{document.getElementById('cfil').style.width=pct+'%';animNum(document.getElementById('csc'),0,pct,1200,'%');},100);
 
-  // Sources
-  const srcs = d.sources_found||[];
-  if (srcs.length > 0) {
-    document.getElementById('src-wrap').style.display = 'block';
-    const sl = document.getElementById('src-list');
-    sl.innerHTML = '';
-    srcs.forEach(s => {
-      const rc = s.is_factchecker ? 'fc' : s.is_nigerian ? 'ng' : '';
-      sl.innerHTML += `<div class="srcitem">
-        <span class="sreg ${rc}">${s.region}</span>
-        <div class="scont">
-          <div class="sname">${s.name}</div>
-          <div class="stitle">${s.title||'—'}</div>
-          ${s.snippet?`<div class="ssnip">${s.snippet}</div>`:''}
-          ${s.pubdate?`<div class="spub">${s.pubdate}</div>`:''}
-          <a class="slink" href="${s.article_url||s.url}" target="_blank" rel="noopener">Read article →</a>
-        </div>
-      </div>`;
+  document.getElementById('tstime').textContent=new Date().toLocaleString();
+  document.getElementById('tssrc').textContent=(d.sources_found||[]).length;
+  document.getElementById('tsart').textContent=d.articles_scraped??'—';
+
+  const cn=document.getElementById('cn');
+  cn.style.display=d.from_cache?'flex':'none';
+
+  document.getElementById('rp').textContent=d.real_probability!=null?(d.real_probability*100).toFixed(1)+'%':'—';
+  document.getElementById('fp').textContent=d.fake_probability!=null?(d.fake_probability*100).toFixed(1)+'%':'—';
+
+  // Phi-3 reasoning panel
+  const phi=d.phi3||{};
+  if(phi.reasoning&&phi.reasoning.length>10){
+    document.getElementById('phi-wrap').style.display='block';
+    const badge=document.getElementById('phi-badge');
+    const pv=phi.verdict||'';
+    if(pv.includes('SUPPORTS')){badge.className='phi-verdict sup';badge.textContent='✅ SUPPORTS CLAIM';}
+    else if(pv.includes('CONTRADICTS')){badge.className='phi-verdict con';badge.textContent='❌ CONTRADICTS CLAIM';}
+    else{badge.className='phi-verdict ins';badge.textContent='⚠️ INSUFFICIENT EVIDENCE';}
+    document.getElementById('phi-text').textContent=phi.reasoning;
+  }else{document.getElementById('phi-wrap').style.display='none';}
+
+  // Fact checkers
+  const fcs=d.fact_checks||[];
+  if(fcs.length>0){
+    document.getElementById('fcw').style.display='block';
+    const fl=document.getElementById('fcl');fl.innerHTML='';
+    fcs.forEach(fc=>{
+      const fake=/false|fake|misleading|debunked|hoax/i.test(fc.title);
+      const real=/true|confirmed|verified|accurate/i.test(fc.title);
+      const badge=fake?'FALSE':real?'VERIFIED':'CHECKED';
+      fl.innerHTML+=`<div class="fci"><span class="fcb">${badge}</span><div class="fcc"><div class="fcs">${fc.name}</div><div class="fch">${fc.title}</div>${fc.snippet?`<div style="font-size:.71rem;color:var(--mu);margin-bottom:3px">${fc.snippet}</div>`:''}<a class="fcl" href="${fc.article_url||fc.url}" target="_blank" rel="noopener">Read full fact check →</a></div></div>`;
     });
-  } else {
-    document.getElementById('src-wrap').style.display = 'none';
+  }else{document.getElementById('fcw').style.display='none';}
+
+  document.getElementById('atxt').textContent=d.analysis||'';
+
+  const sg=document.getElementById('sigs');sg.innerHTML='';
+  (d.signals||[]).forEach(s=>{sg.innerHTML+=`<div class="sig"><div class="si">${s.icon||'📌'}</div><div><div class="sl2">${s.label}</div><div class="sv2 ${s.type||'neu'}">${s.value}</div></div></div>`;});
+
+  const qs=d.queries_used||[];
+  if(qs.length>0){
+    document.getElementById('qw').style.display='block';
+    const qp=document.getElementById('qpills');qp.innerHTML='';
+    qs.forEach(q=>{qp.innerHTML+=`<span class="qpill">"${q}"</span>`;});
   }
 
-  rs.scrollIntoView({behavior:'smooth', block:'start'});
-  loadCounter();   // refresh counter after search
+  const srcs=d.sources_found||[];
+  if(srcs.length>0){
+    document.getElementById('srcw').style.display='block';
+    const sl=document.getElementById('srcl');sl.innerHTML='';
+    srcs.forEach(s=>{
+      const rc=s.is_factchecker?'fc':s.is_nigerian?'ng':'';
+      sl.innerHTML+=`<div class="src"><span class="sreg ${rc}">${s.region}</span><div class="sc"><div class="sn">${s.name}</div><div class="st">${s.title||'—'}</div>${s.snippet?`<div class="ss">${s.snippet}</div>`:''}<div class="spub">${s.pubdate||''}</div><a class="sl3" href="${s.article_url||s.url}" target="_blank" rel="noopener">Read article →</a></div></div>`;
+    });
+  }else{document.getElementById('srcw').style.display='none';}
+
+  rs.scrollIntoView({behavior:'smooth',block:'start'});
+  loadStats();
 }
 
-function animNum(el, from, to, dur, suf='') {
-  const start = performance.now();
-  (function update(now) {
-    const p = Math.min((now-start)/dur, 1);
-    el.textContent = Math.round(from + (to-from)*(1-Math.pow(1-p,3))) + suf;
-    if (p < 1) requestAnimationFrame(update);
+function animNum(el,from,to,dur,suf=''){
+  const start=performance.now();
+  (function u(now){
+    const p=Math.min((now-start)/dur,1);
+    el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-p,3)))+suf;
+    if(p<1)requestAnimationFrame(u);
   })(performance.now());
 }
 
-function reset() {
-  document.getElementById('result').style.display = 'none';
-  document.getElementById('detector').style.display = 'block';
-  document.querySelector('.disc').style.display = 'flex';
-  document.getElementById('txt').value = '';
-  document.getElementById('urlInput').value = '';
-  document.getElementById('cc').textContent = '0 / 8000 characters';
-  document.getElementById('cfill').style.width = '0%';
-  document.getElementById('nli-wrap').style.display = 'none';
-  document.getElementById('q-wrap').style.display = 'none';
-  document.getElementById('src-wrap').style.display = 'none';
-  document.getElementById('fc-wrap').style.display = 'none';
-  document.getElementById('detector').scrollIntoView({behavior:'smooth', block:'start'});
+function resetForm(){
+  document.getElementById('result').style.display='none';
+  document.getElementById('detector').style.display='block';
+  document.querySelector('.disc').style.display='flex';
+  document.getElementById('txt').value='';
+  document.getElementById('urlinp').value='';
+  document.getElementById('cc').textContent='0 / 8000';
+  document.getElementById('cfil').style.width='0%';
+  ['phi-wrap','qw','srcw','fcw'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('detector').scrollIntoView({behavior:'smooth',block:'start'});
 }
 </script>
 </body>
