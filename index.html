@@ -363,15 +363,18 @@ footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
 
     <h4 class="rt">Probability Breakdown</h4>
     <div class="probs">
-      <div class="pc real"><div class="pl">Real Probability</div><div class="pv" id="rp">—</div></div>
-      <div class="pc fake"><div class="pl">Fake Probability</div><div class="pv" id="fp">—</div></div>
+      <div class="pc real"><div class="pl">AI Model (Before Web Check)</div><div class="pv" id="rp">—</div></div>
+      <div class="pc fake"><div class="pl">AI Fake Score (Before Web Check)</div><div class="pv" id="fp">—</div></div>
     </div>
 
+    <div style="font-size:.72rem;color:var(--mu);background:var(--soft);padding:9px 13px;border-radius:9px;margin-bottom:18px;margin-top:-8px;line-height:1.5">
+      ⚠️ <strong>Note:</strong> These scores are the raw DistilBERT AI model output only — before web search, article reading and Phi-3 reasoning. The <strong>final verdict above</strong> combines all 6 layers and is the accurate result.
+    </div>
     <!-- PHI-3 REASONING -->
     <div id="phi-wrap" style="display:none">
       <h4 class="rt">🧠 Phi-3 AI Reading & Reasoning</h4>
       <div class="phi-panel">
-        <div class="phi-title">🧠 Phi-3-mini-128k Read the Articles and Reasoned:</div>
+        <div class="phi-title">🧠 Phi-3.5-mini Read the Articles and Reasoned:</div>
         <div class="phi-verdict" id="phi-badge">—</div>
         <div class="phi-reasoning" id="phi-text">—</div>
       </div>
@@ -448,7 +451,7 @@ footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
 
 <script>
 // ── UPDATE THIS AFTER RAILWAY DEPLOYMENT ──
-const API = 'https://truthlens-production-9cfb.up.railway.app';
+const API = 'https://jabirkabir-truthlens-api.hf.space';
 // Change to your Railway URL e.g:
 // const API = 'https://truthlens-production.up.railway.app';
 
