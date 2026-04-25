@@ -493,7 +493,7 @@ EXPLANATION: [one sentence summary for the user]"""
     try:
         # Call Phi-3-mini-128k via HuggingFace Inference API
         response = requests.post(
-            "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-128k-instruct/v1/chat/completions",
+            "https://api-inference.huggingface.co/models/microsoft/Phi-3.5-mini-instruct/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {HF_TOKEN}",
                 "Content-Type": "application/json"
@@ -552,12 +552,13 @@ EXPLANATION: [one sentence summary for the user]"""
                 "raw":         text[:800]
             }
         elif response.status_code == 503:
-            logger.warning("Phi-3 model loading — retrying in 20s")
+            logger.warning("Phi-3.5 model loading — retrying in 20s")
             time.sleep(20)
             return reason_with_phi3(claim, articles, source_titles)
         else:
-            logger.error(f"Phi-3 API error: {response.status_code} {response.text[:200]}")
-            return {"verdict": "api_error", "reasoning": f"API returned {response.status_code}", "confidence": 0}
+            error_detail = response.text[:300] if response.text else "No details"
+            logger.error(f"Phi-3.5 API error: {response.status_code} — {error_detail}")
+            return {"verdict": "api_error", "reasoning": f"API error {response.status_code}: {error_detail}", "confidence": 0}
 
     except Exception as e:
         logger.error(f"Phi-3 reasoning failed: {e}")
