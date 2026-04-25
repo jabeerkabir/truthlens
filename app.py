@@ -493,29 +493,39 @@ EXPLANATION: [one sentence summary for the user]"""
     try:
         # Call Phi-3-mini-128k via HuggingFace Inference API
         response = requests.post(
-            "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-128k-instruct",
+            "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-128k-instruct/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {HF_TOKEN}",
                 "Content-Type": "application/json"
             },
             json={
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": 500,
-                    "temperature": 0.1,
-                    "do_sample": False,
-                    "return_full_text": False
-                }
+                "model": "microsoft/Phi-3-mini-128k-instruct",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a professional fact-checker. Be concise and precise."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "max_tokens": 500,
+                "temperature": 0.1,
+                "stream": False
             },
             timeout=45
         )
 
         if response.status_code == 200:
             raw = response.json()
-            if isinstance(raw, list) and raw:
+            # Chat completions response format
+            if isinstance(raw, dict) and "choices" in raw:
+                text = raw["choices"][0]["message"]["content"]
+            elif isinstance(raw, list) and raw:
                 text = raw[0].get("generated_text", "")
             elif isinstance(raw, dict):
-                text = raw.get("generated_text", "")
+                text = raw.get("generated_text", str(raw))
             else:
                 text = str(raw)
 
