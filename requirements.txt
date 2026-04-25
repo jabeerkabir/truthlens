@@ -1,0 +1,14 @@
+fastapi==0.110.0
+uvicorn==0.27.1
+pydantic==2.6.1
+transformers==4.38.2
+# torch installed separately in Dockerfile (CPU only)
+sentence-transformers==2.6.1
+faiss-cpu==1.7.4
+numpy<2.0
+requests==2.31.0
+beautifulsoup4==4.12.3
+lxml==5.1.0
+huggingface-hub==0.21.4
+accelerate==0.27.2
+duckduckgo-search==6.2.0
