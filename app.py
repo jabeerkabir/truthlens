@@ -3,13 +3,6 @@ TruthLens API v9.0 — Grok-style Claim-Aware Search
 National Open University of Nigeria (NOUN)
 Developer: Jabir Muhammad Kabir
 Supervisor: Dr. Ojeniyi Adebayo
-
-Key upgrade: Detects claim TYPE then searches the RIGHT sources
-  Political claim  → BBC, Reuters, Punch, Vanguard
-  Education claim  → NUC, JAMB, MySchool, university site
-  Health claim     → WHO, NHS, medical journals
-  Business claim   → Bloomberg, BusinessDay, Reuters
-  General claim    → broad web search
 """
 
 import os, re, time, hashlib, logging, random
@@ -31,6 +24,9 @@ logger = logging.getLogger("truthlens")
 MODEL_ID   = os.environ.get("MODEL_ID", "Jabirkabir/truthlens-fakenews-detector")
 HF_TOKEN   = os.environ.get("HF_TOKEN", "")
 TAVILY_KEY = os.environ.get("TAVILY_KEY", "")
+
+# LLM for reasoning — Mistral is free on HF Inference API
+LLM_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
 
 app = FastAPI(title="TruthLens API", version="9.0", docs_url=None, redoc_url=None)
 app.add_middleware(
@@ -111,7 +107,6 @@ SOURCES = {
     "nuc.edu.ng":          {"region":"Nigeria-Edu", "name":"NUC Nigeria"},
     "jamb.gov.ng":         {"region":"Nigeria-Edu", "name":"JAMB"},
     "waec.org.ng":         {"region":"Nigeria-Edu", "name":"WAEC Nigeria"},
-    "nabteb.gov.ng":       {"region":"Nigeria-Edu", "name":"NABTEB"},
     "myjoyonline.com":     {"region":"Ghana",       "name":"Joy Online"},
     "graphic.com.gh":      {"region":"Ghana",       "name":"Graphic Ghana"},
     "nation.africa":       {"region":"Kenya",       "name":"Nation Africa"},
@@ -156,117 +151,110 @@ for _s, _i in SOURCES.items():
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
 ]
 
+def extract_years(text):
+    return [int(y) for y in re.findall(r'\b(20\d{2})\b', text)]
+
+def run_distilbert(text):
+    inputs = cls_tokenizer(text, return_tensors="pt", truncation=True, max_length=256, padding=True)
+    with torch.no_grad():
+        logits = cls_model(**inputs).logits
+    probs = F.softmax(logits, dim=-1)[0]
+    r, f = float(probs[0]), float(probs[1])
+    return {"real":r,"fake":f,"prediction":int(probs.argmax()),"confidence":int(max(r,f)*100)}
+
 # ══════════════════════════════════════════════════════════════════
-# CLAIM TYPE DETECTOR — This is the Grok-style intelligence
+# CLAIM TYPE DETECTOR
 # ══════════════════════════════════════════════════════════════════
-def detect_claim_type(claim: str) -> dict:
-    """
-    Detect what TYPE of claim this is so we search the RIGHT sources.
-    Like Grok does — different claims need different search strategies.
-    """
+def detect_claim_type(claim: str) -> str:
     c = claim.lower()
-
-    # Education/University claims
-    edu_keywords = [
-        "university","polytechnic","college","school","offers","offering",
-        "course","programme","program","faculty","department","admission",
-        "jamb","waec","neco","cut off","cutoff","result","result","unilag",
-        "unn","oau","uniabuja","futminna","futa","abu","buk","unimaid",
-        "funaab","abubakar","tafawa","balewa","federal","state university",
-        "llb","mbbs","law","medicine","engineering","accredited"
-    ]
-    # Nigerian universities pattern
-    uni_pattern = r'\b(uni|fut|futa|funaab|abu|buk|aaua|lasu|unilag|unn|oau)\b'
-
-    # Political/government claims
-    political_keywords = [
-        "president","governor","senator","minister","government","politician",
-        "tinubu","buhari","obi","atiku","lula","biden","trump","prime minister",
-        "dead","died","death","arrested","impeached","resigned","elected",
-        "coup","protest","policy","bill","law passed","federal"
-    ]
-
-    # Health claims
-    health_keywords = [
-        "vaccine","virus","disease","outbreak","cure","treatment","hospital",
-        "covid","monkeypox","cholera","ebola","cancer","drug","medicine",
-        "who","cdc","ncdc","health","medical","doctor","clinical"
-    ]
-
-    # Business/economy claims
-    business_keywords = [
-        "naira","dollar","economy","inflation","gdp","cbn","bank","stock",
-        "price","rate","fuel","petrol","subsidy","budget","revenue","billion"
-    ]
-
-    edu_score  = sum(1 for k in edu_keywords if k in c)
-    pol_score  = sum(1 for k in political_keywords if k in c)
-    health_score = sum(1 for k in health_keywords if k in c)
-    biz_score  = sum(1 for k in business_keywords if k in c)
-    has_uni    = bool(re.search(uni_pattern, c))
-
-    if edu_score >= 2 or has_uni:
-        claim_type = "education"
-    elif pol_score >= 2:
-        claim_type = "political"
-    elif health_score >= 2:
-        claim_type = "health"
-    elif biz_score >= 2:
-        claim_type = "business"
-    else:
+    scores = {
+        "education": sum(1 for k in [
+            "university","polytechnic","college","school","offers","offering",
+            "course","programme","program","faculty","department","admission",
+            "jamb","waec","neco","cut off","result","llb","mbbs","law","medicine",
+            "engineering","accredited","scholarship","degree","postgraduate"
+        ] if k in c),
+        "political": sum(1 for k in [
+            "president","governor","senator","minister","government","politician",
+            "dead","died","death","arrested","impeached","resigned","elected",
+            "coup","protest","policy","bill","passed","tinubu","buhari","obi","atiku"
+        ] if k in c),
+        "health": sum(1 for k in [
+            "vaccine","virus","disease","outbreak","cure","treatment","hospital",
+            "covid","monkeypox","cholera","ebola","cancer","drug","who","cdc","ncdc"
+        ] if k in c),
+        "business": sum(1 for k in [
+            "naira","dollar","economy","inflation","gdp","cbn","bank","stock",
+            "price","rate","fuel","petrol","subsidy","budget","billion","million"
+        ] if k in c),
+        "entertainment": sum(1 for k in [
+            "music","song","album","artist","movie","film","concert","award",
+            "grammy","oscars","nollywood","afrobeats","singer","actor","actress"
+        ] if k in c),
+        "sports": sum(1 for k in [
+            "football","soccer","basketball","tennis","cricket","super eagles",
+            "premier league","world cup","champions league","goal","match","team"
+        ] if k in c),
+        "science": sum(1 for k in [
+            "research","study","scientists","nasa","space","climate","environment",
+            "discovery","experiment","published","journal","found","shows"
+        ] if k in c),
+    }
+    claim_type = max(scores, key=scores.get)
+    if scores[claim_type] < 1:
         claim_type = "general"
-
-    logger.info(f"Claim type: {claim_type} (edu={edu_score} pol={pol_score} health={health_score})")
-    return {"type": claim_type}
+    logger.info(f"Claim type: {claim_type} scores={scores}")
+    return claim_type
 
 def generate_queries(claim: str, claim_type: str) -> list:
-    """
-    Generate smart queries based on claim type.
-    Education claims search university sites + NUC + JAMB.
-    Political claims search news outlets.
-    """
     queries = [claim]
     proper  = re.findall(r'\b[A-Z][a-z]{2,}\b', claim)
     current_year = datetime.now().year
 
     if claim_type == "education":
-        # Extract university name
         unis = re.findall(
-            r'\b(FUT\s*Minna|FUTMINNA|UniAbuja|UNILAG|UNN|OAU|ABU|BUK|FUTA|FUNAAB|'
-            r'[A-Z]{2,}\s+[A-Z][a-z]+|[A-Z][a-z]+\s+University|[A-Z][a-z]+\s+Polytechnic)\b',
-            claim
+            r'\b(FUT\s*Minna|FUTMINNA|UniAbuja|UNILAG|UNN|OAU|ABU|BUK|FUTA|'
+            r'FUNAAB|[A-Z]{2,}\s+[A-Z][a-z]+)\b', claim
         )
         subjects = re.findall(
             r'\b(law|medicine|engineering|pharmacy|nursing|accounting|'
-            r'economics|computer science|architecture|dentistry|LLB|MBBS)\b',
+            r'economics|computer science|architecture|LLB|MBBS)\b',
             claim, re.IGNORECASE
         )
         if unis:
             uni = unis[0].strip()
-            # Search university website directly
-            queries.append(f"{uni} approved courses programmes {current_year}")
+            queries.append(f"{uni} approved courses NUC accredited {current_year}")
             if subjects:
-                queries.append(f"{uni} {subjects[0]} faculty accredited NUC")
-            else:
-                queries.append(f"{uni} NUC accredited programmes list")
-        queries.append(f"{claim} NUC JAMB {current_year}")
+                queries.append(f"{uni} {subjects[0]} programme faculty accredited")
+        queries.append(f"{claim} NUC JAMB verified {current_year}")
 
     elif claim_type == "political":
         if proper:
-            # Search for current status
             queries.append(f"{' '.join(proper[:2])} latest news {current_year}")
             queries.append(f"is {' '.join(proper[:2])} alive {current_year}")
 
     elif claim_type == "health":
-        queries.append(f"{claim} WHO official {current_year}")
-        queries.append(f"{claim} NCDC Nigeria health {current_year}")
+        queries.append(f"{claim} WHO official statement {current_year}")
+        queries.append(f"{claim} NCDC Nigeria {current_year}")
 
     elif claim_type == "business":
         queries.append(f"{claim} CBN official {current_year}")
-        queries.append(f"{claim} Nigeria economy {current_year}")
+        queries.append(f"{claim} Nigeria economy verified {current_year}")
+
+    elif claim_type == "entertainment":
+        if proper:
+            queries.append(f"{' '.join(proper[:2])} {current_year} confirmed")
+        queries.append(f"{claim} entertainment news {current_year}")
+
+    elif claim_type == "sports":
+        queries.append(f"{claim} sports news {current_year}")
+        queries.append(f"{claim} official confirmed {current_year}")
+
+    elif claim_type == "science":
+        queries.append(f"{claim} peer reviewed study {current_year}")
+        queries.append(f"{claim} scientific evidence {current_year}")
 
     else:
         if proper:
@@ -278,43 +266,37 @@ def generate_queries(claim: str, claim_type: str) -> list:
         if q.lower() not in seen:
             seen.add(q.lower())
             unique.append(q)
-    logger.info(f"Queries ({claim_type}): {unique}")
+    logger.info(f"Queries ({claim_type}): {unique[:4]}")
     return unique[:4]
 
 # ══════════════════════════════════════════════════════════════════
-# SEARCH FUNCTIONS
+# SEARCH
 # ══════════════════════════════════════════════════════════════════
-def search_tavily(query: str, claim_type: str = "general") -> tuple:
+def search_tavily(query: str, claim_type: str) -> tuple:
     if not TAVILY_KEY:
-        logger.warning("TAVILY_KEY not set")
+        logger.warning("TAVILY_KEY empty — skipping Tavily")
         return [], ""
     try:
-        # For education claims search specific sites
+        # For education — search specific authoritative sites
         include_domains = []
         if claim_type == "education":
+            include_domains = ["nuc.edu.ng","jamb.gov.ng","myschool.ng","schoolgist.com.ng"]
+            uni_map = {
+                "futminna":"futminna.edu.ng","unilag":"unilag.edu.ng",
+                "unn":"unn.edu.ng","oau":"oauife.edu.ng","abu":"abu.edu.ng",
+                "buk":"buk.edu.ng","futa":"futa.edu.ng","funaab":"funaab.edu.ng",
+            }
+            for uni, domain in uni_map.items():
+                if uni in query.lower():
+                    include_domains.insert(0, domain)
+                    break
+        elif claim_type == "health":
+            include_domains = ["who.int","cdc.gov","ncdc.gov.ng"]
+        elif claim_type == "political":
             include_domains = [
-                "nuc.edu.ng", "jamb.gov.ng", "myschool.ng",
-                "schoolgist.com.ng", "waec.org.ng"
+                "premiumtimesng.com","punchng.com","vanguardngr.com",
+                "bbc.com","reuters.com","apnews.com","aljazeera.com"
             ]
-            # Add university domain if detected
-            uni_match = re.search(
-                r'(futminna|unilag|unn|oau|abu|buk|futa|funaab)',
-                query.lower()
-            )
-            if uni_match:
-                uni = uni_match.group(1)
-                domain_map = {
-                    "futminna": "futminna.edu.ng",
-                    "unilag":   "unilag.edu.ng",
-                    "unn":      "unn.edu.ng",
-                    "oau":      "oauife.edu.ng",
-                    "abu":      "abu.edu.ng",
-                    "buk":      "buk.edu.ng",
-                    "futa":     "futa.edu.ng",
-                    "funaab":   "funaab.edu.ng",
-                }
-                if uni in domain_map:
-                    include_domains.insert(0, domain_map[uni])
 
         payload = {
             "api_key":             TAVILY_KEY,
@@ -327,29 +309,24 @@ def search_tavily(query: str, claim_type: str = "general") -> tuple:
         if include_domains:
             payload["include_domains"] = include_domains
 
-        resp = requests.post(
-            "https://api.tavily.com/search",
-            json=payload,
-            timeout=20
-        )
-        logger.info(f"Tavily status: {resp.status_code} for '{query[:40]}'")
+        resp = requests.post("https://api.tavily.com/search", json=payload, timeout=20)
+        logger.info(f"Tavily [{claim_type}] '{query[:40]}': status={resp.status_code}")
+
         if resp.status_code == 200:
             data = resp.json()
-            results = []
-            for r in data.get("results", []):
-                results.append({
-                    "href":        r.get("url", ""),
-                    "title":       r.get("title", ""),
-                    "body":        r.get("content", "")[:500],
-                    "raw_content": r.get("raw_content", "")[:4000],
-                    "pubdate":     r.get("published_date", ""),
-                    "source":      "tavily"
-                })
-            answer = data.get("answer", "") or ""
+            results = [{
+                "href":        r.get("url",""),
+                "title":       r.get("title",""),
+                "body":        r.get("content","")[:500],
+                "raw_content": r.get("raw_content","")[:4000],
+                "pubdate":     r.get("published_date",""),
+                "source":      "tavily"
+            } for r in data.get("results",[])]
+            answer = data.get("answer","") or ""
             logger.info(f"Tavily: {len(results)} results, answer={len(answer)} chars")
             return results, answer
         else:
-            logger.error(f"Tavily {resp.status_code}: {resp.text[:200]}")
+            logger.error(f"Tavily error {resp.status_code}: {resp.text[:200]}")
             return [], ""
     except Exception as e:
         logger.error(f"Tavily exception: {e}")
@@ -359,9 +336,7 @@ def search_google_news(query: str, region: str = "US") -> list:
     try:
         q    = requests.utils.quote(query[:200])
         url  = f"https://news.google.com/rss/search?q={q}&hl=en&gl={region}&ceid={region}:en"
-        resp = requests.get(
-            url, headers={"User-Agent": random.choice(USER_AGENTS)}, timeout=12
-        )
+        resp = requests.get(url, headers={"User-Agent": random.choice(USER_AGENTS)}, timeout=12)
         results = []
         if resp.status_code == 200:
             for item in re.findall(r'<item>(.*?)</item>', resp.text, re.DOTALL)[:10]:
@@ -372,13 +347,11 @@ def search_google_news(query: str, region: str = "US") -> list:
                        re.findall(r'<description>(.*?)</description>', item))
                 pub = re.findall(r'<pubDate>(.*?)</pubDate>', item)
                 if t:
-                    clean_t = re.sub(
-                        r'\s+-\s+\S[\S]*\s*$', '', re.sub(r'<.*?>', '', t[0])
-                    ).strip()
+                    clean_t = re.sub(r'\s+-\s+\S[\S]*\s*$','',re.sub(r'<.*?>','',t[0])).strip()
                     results.append({
                         "href":        l[0].strip() if l else "",
                         "title":       clean_t,
-                        "body":        re.sub(r'<.*?>', '', d[0]).strip()[:400] if d else "",
+                        "body":        re.sub(r'<.*?>','',d[0]).strip()[:400] if d else "",
                         "raw_content": "",
                         "pubdate":     pub[0].strip() if pub else "",
                         "source":      "google_news"
@@ -406,10 +379,8 @@ def search_all(queries: list, claim_type: str) -> tuple:
             add(tv_r)
             if tv_a and len(tv_a) > 20:
                 tavily_answers.append(tv_a)
-        # Google News for political/general
-        if claim_type in ("political","general","business"):
-            add(search_google_news(q, "NG"))
-            add(search_google_news(q, "US"))
+        add(search_google_news(q, "NG"))
+        add(search_google_news(q, "US"))
         time.sleep(0.3)
 
     logger.info(f"Total unique results: {len(all_results)}")
@@ -431,17 +402,14 @@ def read_article(url: str) -> str:
             )]
             clean = "\n".join(body).strip()
             if len(clean) > 200:
-                logger.info(f"Jina: {len(clean)} chars from {url[:50]}")
                 return clean[:5000]
         return ""
-    except Exception as e:
-        logger.debug(f"Jina failed: {e}")
+    except:
         return ""
 
 def match_sources(claim: str, results: list) -> list:
     found, seen = [], set()
     claim_years = extract_years(claim)
-
     for r in results:
         url     = (r.get("href") or "").lower()
         title   = r.get("title") or ""
@@ -450,9 +418,7 @@ def match_sources(claim: str, results: list) -> list:
 
         if claim_years and pubdate:
             pub_years = extract_years(pubdate)
-            if pub_years and not any(
-                abs(py-cy) <= 1 for py in pub_years for cy in claim_years
-            ):
+            if pub_years and not any(abs(py-cy)<=1 for py in pub_years for cy in claim_years):
                 continue
 
         matched = None
@@ -466,15 +432,15 @@ def match_sources(claim: str, results: list) -> list:
                 matched = NAME_LOOKUP[suffix]
             else:
                 for name, src in NAME_LOOKUP.items():
-                    if name in suffix and src not in seen and len(name) > 4:
+                    if name in suffix and src not in seen and len(name)>4:
                         matched = src; break
 
         if not matched:
-            combined = (title + " " + snippet).lower()
+            combined = (title+" "+snippet).lower()
             for src, info in SOURCES.items():
                 if src not in seen:
                     core = re.sub(r'\.(com|ng|org|co\.uk|co|tv|africa|net|gov)$','',src)
-                    if len(core) > 5 and core in combined:
+                    if len(core)>5 and core in combined:
                         matched = src; break
 
         if matched:
@@ -499,200 +465,199 @@ def match_sources(claim: str, results: list) -> list:
     logger.info(f"Sources matched: {[s['name'] for s in found]}")
     return found
 
-def extract_years(text):
-    return [int(y) for y in re.findall(r'\b(20\d{2})\b', text)]
-
-def run_distilbert(text):
-    inputs = cls_tokenizer(text,return_tensors="pt",truncation=True,max_length=256,padding=True)
-    with torch.no_grad():
-        logits = cls_model(**inputs).logits
-    probs = F.softmax(logits,dim=-1)[0]
-    r,f   = float(probs[0]),float(probs[1])
-    return {"real":r,"fake":f,"prediction":int(probs.argmax()),"confidence":int(max(r,f)*100)}
-
 # ══════════════════════════════════════════════════════════════════
-# PHI-3.5 REASONING — Grok-style with claim type awareness
+# LLM REASONING — Mistral-7B (actually works on HF Inference API)
 # ══════════════════════════════════════════════════════════════════
-def reason_with_phi35(claim, articles, tavily_summary, claim_type):
+def reason_with_llm(claim: str, articles: list, tavily_summary: str, claim_type: str) -> dict:
     if not HF_TOKEN:
-        return {"verdict":"unavailable","reasoning":"HF_TOKEN not set","confidence":0}
+        return {"verdict":"unavailable","reasoning":"HF_TOKEN not configured","confidence":0}
 
     today = datetime.now().strftime("%d %B %Y")
+
+    # Build evidence
     evidence_parts = []
-
     if tavily_summary and len(tavily_summary) > 30:
-        evidence_parts.append(
-            f"[Web Summary — as of {today}]\n{tavily_summary[:800]}"
-        )
+        evidence_parts.append(f"[Web Summary — {today}]\n{tavily_summary[:600]}")
 
-    for i,(title,text,pubdate,source) in enumerate(articles[:6]):
+    for i, (title, text, pubdate, source) in enumerate(articles[:5]):
         part = f"[Source {i+1}: {source}]"
-        if pubdate: part += f" [Published: {pubdate}]"
+        if pubdate: part += f" [Date: {pubdate}]"
         part += f"\nHeadline: {title}"
         if text and len(text) > 100:
-            part += f"\nContent: {text[:2500]}"
+            part += f"\nContent: {text[:2000]}"
         evidence_parts.append(part)
 
     if not evidence_parts:
-        return {"verdict":"INSUFFICIENT_EVIDENCE","reasoning":"No articles retrieved","confidence":0}
+        return {"verdict":"INSUFFICIENT_EVIDENCE","reasoning":"No articles found","confidence":0}
 
     evidence = "\n\n".join(evidence_parts)
 
-    # Claim-type specific instructions for Phi-3.5
-    type_instructions = {
-        "education": """For education claims:
-- Check if the university OFFICIALLY lists this programme on their website
-- Check NUC (National Universities Commission) accreditation
-- Check JAMB approved course list
-- MySchool.ng and SchoolGist are reliable for Nigerian university courses
-- If no official source confirms it, the claim is likely FALSE""",
+    type_guide = {
+        "education": "For education claims: check if university website or NUC/JAMB officially lists this programme. If no official source confirms it, verdict is CONTRADICTS_CLAIM.",
+        "political": "For political claims: check if major news outlets directly report this event. Someone mourning X does not mean X died. Someone arrested for claiming Y means Y is false.",
+        "health":    "For health claims: WHO and CDC are highest authority. Check official statements.",
+        "business":  "For business claims: check CBN, official government sources, and major financial outlets.",
+        "entertainment": "For entertainment claims: check official announcements, verified artist pages, major entertainment outlets.",
+        "sports":    "For sports claims: check official league/team announcements and major sports outlets.",
+        "science":   "For science claims: check peer-reviewed sources and official research institutions.",
+        "general":   "Check if credible sources directly confirm this specific claim.",
+    }.get(claim_type, "Check if credible sources directly confirm this claim.")
 
-        "political": """For political claims:
-- Check if major credible outlets (BBC, Reuters, AP, Punch, Vanguard) directly report this
-- An article about someone MOURNING does not mean the subject is dead
-- An article about someone being ARRESTED for making a claim means the claim is FALSE
-- Check the most RECENT articles — political situations change quickly""",
+    prompt = f"""[INST] You are TruthLens, a professional AI fact-checker. Today is {today}.
 
-        "health": """For health claims:
-- WHO and CDC are the highest authority sources
-- NCDC is the authority for Nigerian health claims
-- Check if official health bodies have made statements
-- Be very careful — false health claims can cause harm""",
+CLAIM TO VERIFY: "{claim}"
+CLAIM CATEGORY: {claim_type.upper()}
 
-        "general": """For general claims:
-- Look for direct confirmation from credible sources
-- Check publication dates carefully
-- Consider whether the claim matches what articles actually say""",
-    }
+GUIDANCE: {type_guide}
 
-    specific_guidance = type_instructions.get(claim_type, type_instructions["general"])
-
-    prompt = f"""You are TruthLens, an AI fact-checker. Today is {today}.
-
-CLAIM: "{claim}"
-CLAIM TYPE: {claim_type.upper()}
-
-{specific_guidance}
-
-EVIDENCE FOUND:
+EVIDENCE FROM SOURCES:
 {evidence}
 
-ANALYSE CAREFULLY:
-1. Does any source DIRECTLY confirm or deny this claim?
-2. Are sources about the actual claim or just related topics?
-3. For education: is there official university/NUC/JAMB confirmation?
-4. For political: check if news is about the person or just mentions them
-5. Consider dates — old news may not apply today
+IMPORTANT RULES:
+1. Read what each source ACTUALLY says — not just keywords
+2. "Person arrested for claiming X" = X is FALSE
+3. "Person mourns Y" does NOT mean person is dead
+4. Old articles may not reflect current reality
+5. No official university/NUC confirmation = education claim is likely FALSE
+6. Multiple major outlets directly confirming = SUPPORTS_CLAIM
 
-RESPOND EXACTLY:
-REASONING: [detailed step by step analysis of what each source says]
+RESPOND IN THIS EXACT FORMAT:
+REASONING: [explain what each source actually says step by step]
 VERDICT: SUPPORTS_CLAIM or CONTRADICTS_CLAIM or INSUFFICIENT_EVIDENCE
 CONFIDENCE: HIGH or MEDIUM or LOW
-EXPLANATION: [one clear sentence for the user]"""
+EXPLANATION: [one clear sentence for the user] [/INST]"""
 
-    try:
-        resp = requests.post(
-            "https://api-inference.huggingface.co/models/microsoft/Phi-3.5-mini-instruct/v1/chat/completions",
-            headers={"Authorization":f"Bearer {HF_TOKEN}","Content-Type":"application/json"},
-            json={
-                "model": "microsoft/Phi-3.5-mini-instruct",
-                "messages": [
-                    {"role":"system","content":f"You are TruthLens, a professional fact-checker. Today is {today}."},
-                    {"role":"user","content":prompt}
-                ],
-                "max_tokens": 800,
-                "temperature": 0.1,
-                "stream": False
-            },
-            timeout=50
-        )
+    # Try Mistral first — it IS available on HF Inference API
+    models_to_try = [
+        "mistralai/Mistral-7B-Instruct-v0.3",
+        "HuggingFaceH4/zephyr-7b-beta",
+        "microsoft/Phi-3-mini-4k-instruct",
+    ]
 
-        logger.info(f"Phi-3.5 status: {resp.status_code}")
+    for model in models_to_try:
+        try:
+            logger.info(f"Trying LLM: {model}")
+            resp = requests.post(
+                f"https://api-inference.huggingface.co/models/{model}",
+                headers={"Authorization": f"Bearer {HF_TOKEN}"},
+                json={
+                    "inputs": prompt,
+                    "parameters": {
+                        "max_new_tokens": 600,
+                        "temperature": 0.1,
+                        "do_sample": False,
+                        "return_full_text": False
+                    }
+                },
+                timeout=45
+            )
+            logger.info(f"LLM {model} status: {resp.status_code}")
 
-        if resp.status_code == 200:
-            raw = resp.json()
-            if isinstance(raw,dict) and "choices" in raw:
-                text = raw["choices"][0]["message"]["content"]
-            elif isinstance(raw,list) and raw:
-                text = raw[0].get("generated_text","")
+            if resp.status_code == 200:
+                raw = resp.json()
+                if isinstance(raw, list) and raw:
+                    text = raw[0].get("generated_text", "")
+                elif isinstance(raw, dict):
+                    text = raw.get("generated_text", str(raw))
+                else:
+                    text = str(raw)
+
+                if len(text) < 20:
+                    logger.warning(f"LLM returned empty response")
+                    continue
+
+                logger.info(f"LLM response ({len(text)} chars): {text[:300]}")
+
+                v_m = re.search(r'VERDICT[:\s]+(SUPPORTS_CLAIM|CONTRADICTS_CLAIM|INSUFFICIENT_EVIDENCE)', text, re.IGNORECASE)
+                r_m = re.search(r'REASONING[:\s]+(.*?)(?=VERDICT:|CONFIDENCE:|$)', text, re.IGNORECASE|re.DOTALL)
+                c_m = re.search(r'CONFIDENCE[:\s]+(HIGH|MEDIUM|LOW)', text, re.IGNORECASE)
+                e_m = re.search(r'EXPLANATION[:\s]+(.*?)(?=\n\n|\[|$)', text, re.IGNORECASE|re.DOTALL)
+
+                verdict    = v_m.group(1).upper() if v_m else "INSUFFICIENT_EVIDENCE"
+                reasoning  = r_m.group(1).strip()[:800] if r_m else text[:600]
+                confidence = c_m.group(1).upper() if c_m else "MEDIUM"
+                explanation= e_m.group(1).strip()[:250] if e_m else reasoning[:150]
+                conf_score = {"HIGH":0.9,"MEDIUM":0.65,"LOW":0.4}.get(confidence,0.5)
+
+                return {
+                    "verdict":     verdict,
+                    "reasoning":   reasoning,
+                    "explanation": explanation,
+                    "confidence":  conf_score,
+                    "model_used":  model.split("/")[-1]
+                }
+
+            elif resp.status_code == 503:
+                logger.warning(f"{model} loading — trying next")
+                continue
             else:
-                text = str(raw)
+                logger.error(f"{model} returned {resp.status_code}: {resp.text[:150]}")
+                continue
 
-            logger.info(f"Phi-3.5 response: {text[:400]}")
+        except Exception as e:
+            logger.error(f"LLM {model} exception: {e}")
+            continue
 
-            v_m = re.search(r'VERDICT[:\s]+(SUPPORTS_CLAIM|CONTRADICTS_CLAIM|INSUFFICIENT_EVIDENCE)',text,re.IGNORECASE)
-            r_m = re.search(r'REASONING[:\s]+(.*?)(?=VERDICT:|$)',text,re.IGNORECASE|re.DOTALL)
-            c_m = re.search(r'CONFIDENCE[:\s]+(HIGH|MEDIUM|LOW)',text,re.IGNORECASE)
-            e_m = re.search(r'EXPLANATION[:\s]+(.*?)(?=\n\n|$)',text,re.IGNORECASE|re.DOTALL)
+    return {
+        "verdict": "INSUFFICIENT_EVIDENCE",
+        "reasoning": "All LLM models unavailable. Check HF_TOKEN in Railway Variables and ensure token has Inference API access.",
+        "confidence": 0,
+        "model_used": "none"
+    }
 
-            verdict    = v_m.group(1).upper() if v_m else "INSUFFICIENT_EVIDENCE"
-            reasoning  = r_m.group(1).strip()[:1000] if r_m else text[:700]
-            confidence = c_m.group(1).upper() if c_m else "LOW"
-            explanation= e_m.group(1).strip()[:250] if e_m else reasoning[:150]
-            conf_score = {"HIGH":0.9,"MEDIUM":0.65,"LOW":0.4}.get(confidence,0.4)
-
-            return {"verdict":verdict,"reasoning":reasoning,"explanation":explanation,"confidence":conf_score}
-
-        elif resp.status_code == 503:
-            logger.warning("Phi-3.5 loading — retry 20s")
-            time.sleep(20)
-            return reason_with_phi35(claim,articles,tavily_summary,claim_type)
-        else:
-            err = resp.text[:300]
-            logger.error(f"Phi-3.5 {resp.status_code}: {err}")
-            return {"verdict":"api_error","reasoning":f"API {resp.status_code}: {err}","confidence":0}
-
-    except Exception as e:
-        logger.error(f"Phi-3.5 exception: {e}")
-        return {"verdict":"error","reasoning":str(e),"confidence":0}
-
-def fuse_verdict(distilbert, matched, phi35):
+# ══════════════════════════════════════════════════════════════════
+# VERDICT FUSION
+# ══════════════════════════════════════════════════════════════════
+def fuse_verdict(distilbert: dict, matched: list, llm: dict) -> dict:
     nigerian  = [s for s in matched if s["is_nigerian"]]
     factcheck = [s for s in matched if s["is_factchecker"]]
     total     = len(matched)
-    phi_v     = phi35.get("verdict","INSUFFICIENT_EVIDENCE")
-    phi_conf  = phi35.get("confidence",0)
-    phi_exp   = phi35.get("explanation","")
-    phi_ok    = phi_v not in ("unavailable","api_error","error","insufficient_evidence","INSUFFICIENT_EVIDENCE","")
+    llm_v     = llm.get("verdict","INSUFFICIENT_EVIDENCE")
+    llm_conf  = llm.get("confidence",0)
+    llm_exp   = llm.get("explanation","")
+    llm_ok    = llm_v in ("SUPPORTS_CLAIM","CONTRADICTS_CLAIM")
 
     fc_fake = [s for s in factcheck if any(w in s["title"].lower() for w in ["false","fake","misinformation","misleading","debunked","hoax"])]
     fc_real = [s for s in factcheck if any(w in s["title"].lower() for w in ["true","confirmed","accurate","verified","correct"])]
 
     if fc_fake:
-        return {"verdict":"FAKE","confidence":99,"title":"Confirmed Misinformation","subtitle":f"Flagged by {fc_fake[0]['name']}"}
+        return {"verdict":"FAKE","confidence":99,"title":"Confirmed Misinformation","subtitle":f"Flagged by {fc_fake[0]['name']}: {fc_fake[0]['title'][:60]}"}
     if fc_real:
         return {"verdict":"REAL","confidence":99,"title":"Fact-Checker Verified","subtitle":f"Confirmed by {fc_real[0]['name']}"}
-    if phi_ok and phi_v=="CONTRADICTS_CLAIM" and phi_conf>=0.5:
-        return {"verdict":"FAKE","confidence":95,"title":"AI Reading Contradicts Claim","subtitle":phi_exp}
-    if phi_ok and phi_v=="SUPPORTS_CLAIM" and phi_conf>=0.65 and total>=2:
-        return {"verdict":"REAL","confidence":95,"title":"Confirmed — AI Read and Verified","subtitle":f"Phi-3.5 confirmed across {total} sources: {phi_exp}"}
-    if phi_ok and phi_v=="SUPPORTS_CLAIM" and phi_conf>=0.65:
-        return {"verdict":"REAL","confidence":85,"title":"AI Reading Confirms Claim","subtitle":phi_exp}
-    if total>=3 and phi_v!="CONTRADICTS_CLAIM":
+    if llm_ok and llm_v=="CONTRADICTS_CLAIM" and llm_conf>=0.5:
+        return {"verdict":"FAKE","confidence":95,"title":"AI Reading Contradicts Claim","subtitle":llm_exp}
+    if llm_ok and llm_v=="SUPPORTS_CLAIM" and llm_conf>=0.6 and total>=2:
+        return {"verdict":"REAL","confidence":95,"title":"Confirmed — AI Read and Verified","subtitle":f"AI confirmed across {total} sources: {llm_exp}"}
+    if llm_ok and llm_v=="SUPPORTS_CLAIM" and llm_conf>=0.6:
+        return {"verdict":"REAL","confidence":85,"title":"AI Reading Confirms Claim","subtitle":llm_exp}
+    if total>=3 and llm_v!="CONTRADICTS_CLAIM":
         regions=list(dict.fromkeys(s["region"] for s in matched[:4]))
         return {"verdict":"REAL","confidence":85,"title":"Confirmed by Multiple Outlets","subtitle":f"Found in {total} outlets: {', '.join(regions)}"}
-    if len(nigerian)>=2 and phi_v!="CONTRADICTS_CLAIM":
+    if len(nigerian)>=2 and llm_v!="CONTRADICTS_CLAIM":
         return {"verdict":"REAL","confidence":82,"title":"Confirmed by Nigerian Outlets","subtitle":f"{nigerian[0]['name']} and {nigerian[1]['name']}"}
-    if total>=2 and phi_v!="CONTRADICTS_CLAIM":
+    if total>=2 and llm_v!="CONTRADICTS_CLAIM":
         return {"verdict":"REAL","confidence":75,"title":"Likely Authentic News","subtitle":f"Found in {matched[0]['name']} and {matched[1]['name']}"}
-    if total==1 and phi_v!="CONTRADICTS_CLAIM":
+    if total==1 and llm_v!="CONTRADICTS_CLAIM":
         return {"verdict":"REAL","confidence":60,"title":"Possibly Authentic","subtitle":f"1 outlet: {matched[0]['name']}. Verify further."}
     if distilbert["prediction"]==1 and distilbert["confidence"]>=80:
         return {"verdict":"FAKE","confidence":78,"title":"Likely Fake — No Sources","subtitle":"Misinformation patterns + zero credible sources found."}
     if distilbert["prediction"]==0 and distilbert["confidence"]>=80:
         return {"verdict":"SUSPICIOUS","confidence":55,"title":"Suspicious — Cannot Verify","subtitle":"Writing appears credible but no outlet confirms this."}
-    return {"verdict":"MIXED","confidence":50,"title":"Uncertain — Verify Manually","subtitle":"Mixed signals. Use fact-checker links below."}
+    return {"verdict":"MIXED","confidence":50,"title":"Uncertain — Verify Manually","subtitle":"Mixed signals. Use the fact-checker links below."}
 
+# ══════════════════════════════════════════════════════════════════
+# ENDPOINTS
+# ══════════════════════════════════════════════════════════════════
 class AnalyseRequest(BaseModel):
     text: str
 
 @app.get("/")
 def root():
-    return {"name":"TruthLens API v9.0","status":"running","tavily":bool(TAVILY_KEY),"phi35":bool(HF_TOKEN),"sources":len(SOURCES)}
+    return {"name":"TruthLens API v9.0","status":"running","tavily":bool(TAVILY_KEY),"llm":bool(HF_TOKEN),"llm_model":LLM_MODEL,"sources":len(SOURCES)}
 
 @app.get("/health")
 def health():
-    return {"status":"healthy","tavily":bool(TAVILY_KEY),"phi35":bool(HF_TOKEN)}
+    return {"status":"healthy","tavily":bool(TAVILY_KEY),"llm":bool(HF_TOKEN)}
 
 @app.get("/stats")
 def stats():
@@ -704,7 +669,7 @@ async def analyse(req: AnalyseRequest):
     if not text or len(text)<8: raise HTTPException(400,"Text too short")
     if len(text)>8000: raise HTTPException(400,"Text too long")
 
-    clean = re.sub(r'http\S+|www\S+|<.*?>|\s+',' ',text).strip()[:600]
+    clean        = re.sub(r'http\S+|www\S+|<.*?>|\s+',' ',text).strip()[:600]
     current_year = datetime.now().year
     claim_years  = extract_years(clean)
     future_years = [y for y in claim_years if y>current_year]
@@ -720,87 +685,88 @@ async def analyse(req: AnalyseRequest):
         return cached
     tick()
 
-    db = run_distilbert(clean)
-    logger.info(f"DistilBERT: {'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}%")
-
-    claim_info = detect_claim_type(clean)
-    claim_type = claim_info["type"]
-
-    queries = generate_queries(clean, claim_type)
+    db         = run_distilbert(clean)
+    claim_type = detect_claim_type(clean)
+    queries    = generate_queries(clean, claim_type)
     results, tavily_summary = search_all(queries, claim_type)
+    matched    = match_sources(clean, results)
+    factcheck  = [s for s in matched if s["is_factchecker"]]
 
-    matched   = match_sources(clean, results)
-    factcheck = [s for s in matched if s["is_factchecker"]]
-
-    articles_for_phi = []
+    articles_for_llm = []
     for src in matched[:6]:
         raw = src.get("raw_content","")
-        if raw and len(raw)>200:
-            full_text = raw
-        else:
-            url = src["article_url"]
-            full_text = read_article(url) if url and "news.google.com" not in url else ""
-        articles_for_phi.append((src["title"],full_text,src["pubdate"],src["name"]))
+        full_text = raw if raw and len(raw)>200 else read_article(src["article_url"])
+        articles_for_llm.append((src["title"],full_text,src["pubdate"],src["name"]))
 
     for r in results[:8]:
         rc = r.get("raw_content","")
         if rc and len(rc)>300:
             title = r.get("title","")
-            if not any(t==title for t,_,_,_ in articles_for_phi):
-                sn = "Web"
-                for sd in SOURCES:
-                    if sd in (r.get("href") or "").lower():
-                        sn = SOURCES[sd]["name"]; break
-                articles_for_phi.append((title,rc,r.get("pubdate",""),sn))
+            if not any(t==title for t,_,_,_ in articles_for_llm):
+                sn = next((SOURCES[sd]["name"] for sd in SOURCES if sd in (r.get("href") or "").lower()),"Web")
+                articles_for_llm.append((title,rc,r.get("pubdate",""),sn))
 
-    scraped = sum(1 for _,t,_,_ in articles_for_phi if len(t)>200)
+    scraped = sum(1 for _,t,_,_ in articles_for_llm if len(t)>200)
 
-    phi35 = reason_with_phi35(clean, articles_for_phi, tavily_summary, claim_type)
-    logger.info(f"Phi-3.5: verdict={phi35.get('verdict')} conf={phi35.get('confidence')}")
-
-    fusion     = fuse_verdict(db, matched, phi35)
+    llm    = reason_with_llm(clean, articles_for_llm, tavily_summary, claim_type)
+    fusion = fuse_verdict(db, matched, llm)
     verdict    = fusion["verdict"]
     confidence = fusion["confidence"]
 
+    model_used = llm.get("model_used","unknown")
     upper     = sum(1 for w in clean.split() if w.isupper() and len(w)>2)
     excl      = clean.count("!")
     clickbait = any(w in clean.lower() for w in ["shocking","secret","exposed","leaked","viral","breaking"])
 
-    phi_sig = {
-        "SUPPORTS_CLAIM":        ("Read articles — SUPPORTS claim",    "pos"),
-        "CONTRADICTS_CLAIM":     ("Read articles — CONTRADICTS claim", "neg"),
-        "INSUFFICIENT_EVIDENCE": ("Insufficient article content",       "neu"),
-    }.get(phi35.get("verdict",""),("Check HF_TOKEN in Railway Variables","neu"))
+    llm_sig = {
+        "SUPPORTS_CLAIM":        (f"AI read articles — SUPPORTS claim","pos"),
+        "CONTRADICTS_CLAIM":     (f"AI read articles — CONTRADICTS claim","neg"),
+        "INSUFFICIENT_EVIDENCE": ("Insufficient evidence in articles","neu"),
+    }.get(llm.get("verdict",""),("LLM unavailable — check HF_TOKEN","neu"))
 
     signals = [
         {"icon":"🌐","label":"Web Sources","value":f"{len(matched)} credible outlets","type":"pos" if len(matched)>=2 else "neg" if len(matched)==0 else "neu"},
         {"icon":"🤖","label":"DistilBERT","value":f"{'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}%","type":"pos" if db['prediction']==0 else "neg"},
-        {"icon":"🧠","label":"Phi-3.5 Reasoning","value":phi_sig[0],"type":phi_sig[1]},
+        {"icon":"🧠","label":f"AI Reasoning","value":llm_sig[0],"type":llm_sig[1]},
         {"icon":"📰","label":"Articles Read","value":f"{scraped} articles analysed","type":"pos" if scraped>0 else "neu"},
-        {"icon":"🎯","label":"Claim Type","value":claim_type.upper(),"type":"neu"},
+        {"icon":"🎯","label":"Claim Category","value":claim_type.upper(),"type":"neu"},
         {"icon":"🎣","label":"Clickbait","value":"Detected" if clickbait else "None","type":"neg" if clickbait else "pos"},
     ]
 
-    phi_reasoning = phi35.get("reasoning","") or phi35.get("explanation","") or "No reasoning returned from Phi-3.5. Check HF_TOKEN in Railway Variables."
+    llm_reasoning = llm.get("reasoning","") or llm.get("explanation","") or "No reasoning returned. Check HF_TOKEN in Railway Variables."
+    src_list = ", ".join(s["name"] for s in matched[:3]) if matched else "none"
 
     if verdict=="REAL":
-        src_list=", ".join(s["name"] for s in matched[:3]) if matched else "none"
-        analysis=(f"This content appears CREDIBLE.\n\nCLAIM TYPE: {claim_type.upper()} — searched the most relevant sources for this type of claim.\n\nLAYER 1 — DistilBERT: {'REAL' if db['prediction']==0 else 'FAKE'} at {db['confidence']}% (raw score before web verification).\n\nLAYER 2 — WEB: Found {len(matched)} outlet(s) including {src_list}. Used {len(queries)} targeted queries via Tavily + Google News.\n\nLAYER 3 — PHI-3.5: {phi_reasoning[:500]}\n\nRECOMMENDATION: Content appears credible. Click sources below.")
+        analysis=(f"CREDIBLE — {claim_type.upper()} CLAIM\n\nLAYER 1 — DistilBERT: {'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}% (raw score before web check).\n\nLAYER 2 — WEB SEARCH [{claim_type}]: Found {len(matched)} outlet(s) including {src_list}. Searched via {len(queries)} targeted queries via Tavily + Google News.\n\nLAYER 3 — AI READING ({model_used}): {llm_reasoning[:500]}\n\nRECOMMENDATION: Content appears credible. Click sources to verify.")
     elif verdict in ("FAKE","SUSPICIOUS"):
-        analysis=(f"This content is LIKELY FAKE OR MISLEADING.\n\nCLAIM TYPE: {claim_type.upper()} — searched the most relevant sources.\n\nLAYER 1 — DistilBERT: {db['confidence']}% {'REAL' if db['prediction']==0 else 'FAKE'}.\n\nLAYER 2 — WEB: {'Zero credible sources found.' if not matched else f'{len(matched)} sources found but content contradicts the claim.'}\n\nLAYER 3 — PHI-3.5: {phi_reasoning[:500]}\n\nRECOMMENDATION: Do not share. Verify through AfricaCheck or Dubawa.")
+        analysis=(f"LIKELY FAKE — {claim_type.upper()} CLAIM\n\nLAYER 1 — DistilBERT: {db['confidence']}% {'REAL' if db['prediction']==0 else 'FAKE'}.\n\nLAYER 2 — WEB SEARCH [{claim_type}]: {'Zero credible sources found.' if not matched else f'{len(matched)} source(s) — content contradicts claim.'}\n\nLAYER 3 — AI READING ({model_used}): {llm_reasoning[:500]}\n\nRECOMMENDATION: Do not share. Verify through AfricaCheck or Dubawa.")
     else:
-        analysis=(f"UNCERTAIN: Mixed signals.\n\nCLAIM TYPE: {claim_type.upper()}.\nDistilBERT: {db['confidence']}%. Sources: {len(matched)}.\nPhi-3.5: {phi_reasoning[:300]}\n\nRECOMMENDATION: Check AfricaCheck or Dubawa.")
+        analysis=(f"UNCERTAIN — {claim_type.upper()} CLAIM\n\nDistilBERT: {db['confidence']}%. Sources: {len(matched)}. AI: {llm_reasoning[:300]}\n\nRECOMMENDATION: Check AfricaCheck or Dubawa before sharing.")
 
     result = {
         "verdict":verdict,"confidence":confidence,
         "verdict_title":fusion["title"],"verdict_subtitle":fusion["subtitle"],
         "analysis":analysis,"signals":signals,
         "real_probability":round(db["real"],4),"fake_probability":round(db["fake"],4),
-        "phi3":{"verdict":phi35.get("verdict",""),"reasoning":phi_reasoning,"explanation":phi35.get("explanation",""),"confidence":phi35.get("confidence",0)},
+        "phi3":{
+            "verdict":llm.get("verdict",""),
+            "reasoning":llm_reasoning,
+            "explanation":llm.get("explanation",""),
+            "confidence":llm.get("confidence",0),
+            "model":model_used
+        },
         "claim_type":claim_type,
         "tavily_summary":tavily_summary[:300] if tavily_summary else "",
-        "sources_found":[{"source":s["source"],"name":s["name"],"region":s["region"],"url":s["url"],"article_url":s["article_url"],"title":s["title"][:120],"snippet":s["snippet"],"pubdate":s["pubdate"],"is_factchecker":s["is_factchecker"],"is_nigerian":s["is_nigerian"]} for s in matched[:8]],
-        "fact_checks":[{"name":s["name"],"url":s["url"],"article_url":s["article_url"],"title":s["title"][:120],"snippet":s["snippet"]} for s in factcheck[:3]],
+        "sources_found":[{
+            "source":s["source"],"name":s["name"],"region":s["region"],
+            "url":s["url"],"article_url":s["article_url"],
+            "title":s["title"][:120],"snippet":s["snippet"],
+            "pubdate":s["pubdate"],"is_factchecker":s["is_factchecker"],"is_nigerian":s["is_nigerian"]
+        } for s in matched[:8]],
+        "fact_checks":[{
+            "name":s["name"],"url":s["url"],"article_url":s["article_url"],
+            "title":s["title"][:120],"snippet":s["snippet"]
+        } for s in factcheck[:3]],
         "queries_used":queries,"articles_scraped":scraped,
         "search_timestamp":datetime.now().isoformat(),
         "from_cache":False,"daily_stats":COUNTER.copy(),
@@ -814,9 +780,16 @@ def _future_verdict(year):
         "verdict_title":"Future Event Claimed as Fact",
         "verdict_subtitle":f"References {year} which has not happened yet.",
         "analysis":f"This content references {year}, a future year. Cannot be fact.\n\nDo not share.",
-        "signals":[{"icon":"📅","label":"Date","value":f"Future year {year}","type":"neg"},{"icon":"🚫","label":"Verdict","value":"Impossible","type":"neg"},{"icon":"🤖","label":"DistilBERT","value":"N/A","type":"neg"},{"icon":"🧠","label":"Phi-3.5","value":"N/A","type":"neg"},{"icon":"🌐","label":"Web","value":"N/A","type":"neg"},{"icon":"⚠️","label":"Warning","value":"Do not share","type":"neg"}],
+        "signals":[
+            {"icon":"📅","label":"Date","value":f"Future year {year}","type":"neg"},
+            {"icon":"🚫","label":"Verdict","value":"Impossible","type":"neg"},
+            {"icon":"🤖","label":"DistilBERT","value":"N/A","type":"neg"},
+            {"icon":"🧠","label":"AI Reading","value":"N/A","type":"neg"},
+            {"icon":"🌐","label":"Web","value":"N/A","type":"neg"},
+            {"icon":"⚠️","label":"Warning","value":"Do not share","type":"neg"},
+        ],
         "real_probability":0.01,"fake_probability":0.99,
-        "phi3":{"verdict":"N/A","reasoning":"Future date detected","confidence":0},
+        "phi3":{"verdict":"N/A","reasoning":"Future date","confidence":0,"model":"none"},
         "claim_type":"temporal","tavily_summary":"",
         "sources_found":[],"fact_checks":[],"queries_used":[],"articles_scraped":0,
         "search_timestamp":datetime.now().isoformat(),"from_cache":False,"daily_stats":{}
