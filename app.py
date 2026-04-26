@@ -1,26 +1,17 @@
 """
-TruthLens API v7.0 — Production Ready with Grok-style Reasoning
+TruthLens API v8.0 — Production Ready
 National Open University of Nigeria (NOUN)
 Developer: Jabir Muhammad Kabir
 Supervisor: Dr. Ojeniyi Adebayo
-
-Pipeline:
-  1. DistilBERT     — instant linguistic pattern analysis
-  2. Tavily Search  — AI-native search with date awareness
-  3. Google News    — additional Nigerian + global coverage  
-  4. Jina Reader    — reads full article text bypassing blocks
-  5. Phi-3.5-mini   — reads articles, reasons like Grok
-  6. Smart Fusion   — combines all signals into final verdict
 """
 
-import os, re, time, json, hashlib, logging, random
+import os, re, time, hashlib, logging, random
 from datetime import datetime, date
 from collections import defaultdict
 
 import torch
 import torch.nn.functional as F
 import requests
-from bs4 import BeautifulSoup
 from fastapi import FastAPI, Request as FastAPIRequest, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -31,12 +22,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("truthlens")
 
 # ── Environment ────────────────────────────────────────────────────
-MODEL_ID    = os.environ.get("MODEL_ID", "Jabirkabir/truthlens-fakenews-detector")
-HF_TOKEN    = os.environ.get("HF_TOKEN", "")
-TAVILY_KEY  = os.environ.get("TAVILY_KEY", "")
+MODEL_ID   = os.environ.get("MODEL_ID", "Jabirkabir/truthlens-fakenews-detector")
+HF_TOKEN   = os.environ.get("HF_TOKEN", "")
+TAVILY_KEY = os.environ.get("TAVILY_KEY", "")
 
 # ── App ────────────────────────────────────────────────────────────
-app = FastAPI(title="TruthLens API", version="7.0", docs_url=None, redoc_url=None)
+app = FastAPI(title="TruthLens API", version="8.0", docs_url=None, redoc_url=None)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -55,7 +46,7 @@ async def security(request: FastAPIRequest, call_next):
         now = time.time()
         _rate[ip] = [t for t in _rate[ip] if now - t < 60]
         if len(_rate[ip]) >= 20:
-            return JSONResponse(status_code=429, content={"error": "Too many requests. Wait 60 seconds."})
+            return JSONResponse(status_code=429, content={"error": "Too many requests."})
         _rate[ip].append(now)
     resp = await call_next(request)
     resp.headers["X-Content-Type-Options"] = "nosniff"
@@ -71,11 +62,9 @@ logger.info("DistilBERT ready!")
 
 # ── Cache ──────────────────────────────────────────────────────────
 CACHE: dict = {}
-CACHE_TTL = 3600 * 3  # 3 hours (shorter for date-sensitive claims)
+CACHE_TTL = 3600 * 3
 
 def cache_key(text: str) -> str:
-    # Include today's date in key so JAMB 2026 results
-    # get re-searched each day automatically
     today = str(date.today())
     return hashlib.md5(f"{today}:{text.lower().strip()}".encode()).hexdigest()
 
@@ -162,12 +151,12 @@ SOURCES = {
 }
 
 NAME_LOOKUP = {}
-for src, info in SOURCES.items():
-    n = info["name"].lower()
-    NAME_LOOKUP[n] = src
-    parts = n.split()
-    if len(parts) >= 2:
-        NAME_LOOKUP[" ".join(parts[:2])] = src
+for _src, _info in SOURCES.items():
+    _n = _info["name"].lower()
+    NAME_LOOKUP[_n] = _src
+    _parts = _n.split()
+    if len(_parts) >= 2:
+        NAME_LOOKUP[" ".join(_parts[:2])] = _src
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
@@ -187,7 +176,7 @@ def run_distilbert(text: str) -> dict:
     )
     with torch.no_grad():
         logits = cls_model(**inputs).logits
-    probs = torch.nn.functional.softmax(logits, dim=-1)[0]
+    probs = F.softmax(logits, dim=-1)[0]
     real_p = float(probs[0])
     fake_p = float(probs[1])
     return {
@@ -197,29 +186,23 @@ def run_distilbert(text: str) -> dict:
     }
 
 def generate_queries(claim: str) -> list:
-    """Generate smart search queries including a current-status query"""
     queries = [claim]
     proper  = re.findall(r'\b[A-Z][a-z]{2,}\b', claim)
     years   = re.findall(r'\b20\d{2}\b', claim)
     actions = re.findall(
         r'\b(dead|died|death|arrested|elected|resigned|appointed|'
-        r'banned|attacked|killed|won|lost|signed|launched|announced|released|out)\b',
+        r'banned|killed|won|lost|announced|released|out|offers|offering)\b',
         claim.lower()
     )
     if proper and actions:
         queries.append(" ".join(proper[:3]) + " " + actions[0])
     elif proper:
         queries.append(" ".join(proper[:4]))
-
-    # Always add a "current status" query for time-sensitive claims
-    # e.g. "Is Tinubu alive 2026?" or "JAMB 2026 results status"
     current_year = datetime.now().year
     if proper:
-        status_q = f"{' '.join(proper[:2])} current status {current_year}"
-        queries.append(status_q)
+        queries.append(f"{' '.join(proper[:2])} {current_year}")
     elif years:
         queries.append(claim + f" {current_year}")
-
     seen, unique = set(), []
     for q in queries:
         if q.lower() not in seen:
@@ -229,31 +212,32 @@ def generate_queries(claim: str) -> list:
     return unique[:3]
 
 # ══════════════════════════════════════════════════════════════════
-# LAYER 2a — Tavily Search (AI-native, date-aware)
+# LAYER 2a — Tavily Search
 # ══════════════════════════════════════════════════════════════════
-def search_tavily(query: str) -> list:
+def search_tavily(query: str) -> tuple:
     """
-    Tavily is built for AI agents — returns clean article content
-    with publication dates. Works perfectly on Railway.
-    Free: 1000 searches/month.
+    Returns (list_of_results, answer_string)
+    NOT restricting domains so it searches the whole web
+    then we filter by credible sources after
     """
     if not TAVILY_KEY:
-        logger.warning("No TAVILY_KEY — skipping Tavily search")
-        return []
+        logger.warning("TAVILY_KEY not set — skipping")
+        return [], ""
     try:
+        payload = {
+            "api_key":             TAVILY_KEY,
+            "query":               query,
+            "search_depth":        "advanced",
+            "include_answer":      True,
+            "include_raw_content": True,
+            "max_results":         10,
+        }
         resp = requests.post(
             "https://api.tavily.com/search",
-            json={
-                "api_key":        TAVILY_KEY,
-                "query":          query,
-                "search_depth":   "advanced",
-                "include_answer": True,
-                "include_raw_content": True,
-                "max_results":    8,
-                "include_domains": list(SOURCES.keys()),
-            },
-            timeout=15
+            json=payload,
+            timeout=20
         )
+        logger.info(f"Tavily status: {resp.status_code}")
         if resp.status_code == 200:
             data = resp.json()
             results = []
@@ -262,26 +246,22 @@ def search_tavily(query: str) -> list:
                     "href":        r.get("url", ""),
                     "title":       r.get("title", ""),
                     "body":        r.get("content", "")[:500],
-                    "raw_content": r.get("raw_content", "")[:3000],
+                    "raw_content": r.get("raw_content", "")[:4000],
                     "pubdate":     r.get("published_date", ""),
-                    "score":       r.get("score", 0),
                     "source":      "tavily"
                 })
-            # Also get Tavily's own answer summary
-            tavily_answer = data.get("answer", "")
-            logger.info(f"Tavily: {len(results)} results for '{query[:40]}'")
-            if tavily_answer:
-                logger.info(f"Tavily answer: {tavily_answer[:150]}")
-            return results, tavily_answer
+            answer = data.get("answer", "") or ""
+            logger.info(f"Tavily: {len(results)} results, answer={bool(answer)}")
+            return results, answer
         else:
-            logger.error(f"Tavily error: {resp.status_code} {resp.text[:200]}")
+            logger.error(f"Tavily error {resp.status_code}: {resp.text[:200]}")
             return [], ""
     except Exception as e:
-        logger.error(f"Tavily failed: {e}")
+        logger.error(f"Tavily exception: {e}")
         return [], ""
 
 # ══════════════════════════════════════════════════════════════════
-# LAYER 2b — Google News RSS (backup, free, unlimited)
+# LAYER 2b — Google News RSS
 # ══════════════════════════════════════════════════════════════════
 def search_google_news(query: str, region: str = "US") -> list:
     try:
@@ -302,8 +282,10 @@ def search_google_news(query: str, region: str = "US") -> list:
                        re.findall(r'<description>(.*?)</description>', item))
                 pub = re.findall(r'<pubDate>(.*?)</pubDate>', item)
                 if t:
-                    clean_t = re.sub(r'\s+-\s+\S[\S]*\s*$', '',
-                              re.sub(r'<.*?>', '', t[0])).strip()
+                    clean_t = re.sub(
+                        r'\s+-\s+\S[\S]*\s*$', '',
+                        re.sub(r'<.*?>', '', t[0])
+                    ).strip()
                     results.append({
                         "href":        l[0].strip() if l else "",
                         "title":       clean_t,
@@ -319,7 +301,6 @@ def search_google_news(query: str, region: str = "US") -> list:
         return []
 
 def search_all(queries: list) -> tuple:
-    """Run all searches, combine, deduplicate"""
     all_results, seen_urls = [], set()
     tavily_answers = []
 
@@ -331,56 +312,44 @@ def search_all(queries: list) -> tuple:
                 all_results.append(r)
 
     for q in queries:
-        # Tavily first — best quality + date-aware
         if TAVILY_KEY:
             tv_results, tv_answer = search_tavily(q)
             add(tv_results)
-            if tv_answer:
+            if tv_answer and len(tv_answer) > 20:
                 tavily_answers.append(tv_answer)
-        # Google News Nigerian edition
         add(search_google_news(q, "NG"))
-        # Google News US edition
         add(search_google_news(q, "US"))
         time.sleep(0.3)
 
     logger.info(f"Total unique results: {len(all_results)}")
-    combined_answer = " ".join(tavily_answers[:2]) if tavily_answers else ""
-    return all_results, combined_answer
+    return all_results, " ".join(tavily_answers[:2])
 
 # ══════════════════════════════════════════════════════════════════
-# LAYER 3 — Jina Reader (reads articles bypassing all blocks)
+# LAYER 3 — Jina Reader
 # ══════════════════════════════════════════════════════════════════
 def read_article(url: str) -> str:
-    """
-    Jina AI Reader bypasses Cloudflare, paywalls, bot detection.
-    Works on ALL Nigerian and global news sites.
-    Free, no API key.
-    """
     if not url or "news.google.com" in url:
         return ""
     try:
-        jina_url = f"https://r.jina.ai/{url}"
         resp = requests.get(
-            jina_url,
+            f"https://r.jina.ai/{url}",
             headers={
                 "User-Agent": random.choice(USER_AGENTS),
                 "Accept": "text/plain",
-                "X-Return-Format": "text",
             },
             timeout=15
         )
         if resp.status_code == 200 and len(resp.text) > 200:
-            text  = resp.text
-            lines = text.split("\n")
-            body  = []
-            for line in lines:
-                if line.startswith(("Title:", "URL:", "Published", "Source:",
-                                    "Description:", "---", "===")):
-                    continue
-                body.append(line)
+            lines = resp.text.split("\n")
+            body = [
+                l for l in lines
+                if not l.startswith(
+                    ("Title:", "URL:", "Published", "Source:", "Description:", "---", "===")
+                )
+            ]
             clean = "\n".join(body).strip()
             if len(clean) > 200:
-                logger.info(f"Jina read {len(clean)} chars from {url[:50]}")
+                logger.info(f"Jina: {len(clean)} chars from {url[:50]}")
                 return clean[:5000]
         return ""
     except Exception as e:
@@ -391,41 +360,33 @@ def read_article(url: str) -> str:
 # Source matching
 # ══════════════════════════════════════════════════════════════════
 def match_sources(claim: str, results: list) -> list:
-    """
-    Match results to credible sources.
-    Handles Google News URLs (news.google.com) by matching title suffix.
-    Also uses Tavily direct URLs.
-    """
     found, seen = [], set()
     claim_years = extract_years(claim)
 
     for r in results:
-        url         = (r.get("href") or "").lower()
-        title       = r.get("title") or ""
-        snippet     = r.get("body") or ""
-        pubdate     = r.get("pubdate") or ""
-        raw_content = r.get("raw_content") or ""
+        url     = (r.get("href") or "").lower()
+        title   = r.get("title") or ""
+        snippet = r.get("body")  or ""
+        pubdate = r.get("pubdate") or ""
 
-        # Date filter — check pubdate against claim years
         if claim_years and pubdate:
             pub_years = extract_years(pubdate)
             if pub_years and not any(
                 abs(py - cy) <= 1
-                for py in pub_years
-                for cy in claim_years
+                for py in pub_years for cy in claim_years
             ):
-                logger.info(f"Date filtered: {title[:50]} pub={pubdate}")
+                logger.info(f"Date filtered: {title[:50]}")
                 continue
 
         matched = None
 
-        # Method 1: Direct URL match (Tavily returns real URLs)
+        # Method 1: Direct URL
         for src in SOURCES:
             if src in url and src not in seen:
                 matched = src
                 break
 
-        # Method 2: Google News title suffix "Headline - Source Name"
+        # Method 2: Google News title suffix
         if not matched and " - " in title:
             suffix = title.split(" - ")[-1].strip().lower()
             if suffix in NAME_LOOKUP and NAME_LOOKUP[suffix] not in seen:
@@ -436,14 +397,12 @@ def match_sources(claim: str, results: list) -> list:
                         matched = src
                         break
 
-        # Method 3: Domain keyword in title or snippet
+        # Method 3: Domain keyword in text
         if not matched:
             combined = (title + " " + snippet).lower()
             for src, info in SOURCES.items():
                 if src not in seen:
-                    core = re.sub(
-                        r'\.(com|ng|org|co\.uk|co|tv|africa|net)$', '', src
-                    )
+                    core = re.sub(r'\.(com|ng|org|co\.uk|co|tv|africa|net)$', '', src)
                     if len(core) > 5 and core in combined:
                         matched = src
                         break
@@ -454,7 +413,7 @@ def match_sources(claim: str, results: list) -> list:
             raw_url = r.get("href") or ""
             article_url = (
                 raw_url
-                if (raw_url.startswith("http") and "news.google.com" not in raw_url)
+                if raw_url.startswith("http") and "news.google.com" not in raw_url
                 else f"https://{matched}"
             )
             found.append({
@@ -465,134 +424,100 @@ def match_sources(claim: str, results: list) -> list:
                 "article_url":    article_url,
                 "title":          title,
                 "snippet":        snippet[:300],
-                "raw_content":    raw_content,
+                "raw_content":    r.get("raw_content", ""),
                 "pubdate":        pubdate,
                 "is_nigerian":    info["region"] in ("Nigeria", "Nigeria-Edu"),
                 "is_factchecker": info["region"] == "FactChecker",
             })
 
-    found.sort(
-        key=lambda x: (x["is_factchecker"] * 2 + x["is_nigerian"]),
-        reverse=True
-    )
+    found.sort(key=lambda x: (x["is_factchecker"] * 2 + x["is_nigerian"]), reverse=True)
     logger.info(f"Sources matched: {[s['name'] for s in found]}")
     return found
 
 # ══════════════════════════════════════════════════════════════════
-# LAYER 4 — Phi-3.5-mini reasoning (Grok-style)
+# LAYER 4 — Phi-3.5-mini reasoning
 # ══════════════════════════════════════════════════════════════════
 def reason_with_phi35(
     claim: str,
-    articles: list,      # list of (title, full_text, pubdate, source_name)
-    tavily_summary: str  # Tavily's own answer about the topic
+    articles: list,
+    tavily_summary: str
 ) -> dict:
-    """
-    Phi-3.5-mini reads full articles and reasons like Grok.
-    
-    Key difference from before:
-    - Gets full article TEXT not just titles
-    - Gets publication dates so it knows WHEN articles were written
-    - Gets Tavily's independent web summary
-    - Reasons about MEANING not keywords
-    
-    Example:
-    Claim: "Tinubu is dead"
-    Article 1: "TikToker arrested for FALSELY claiming Tinubu died"
-    Article 2: "Tinubu mourns death of Kano lawmaker"
-    Phi-3.5: "Article 1 says someone was arrested for making this 
-              false claim. Article 2 shows Tinubu mourning someone — 
-              he is clearly alive. VERDICT: FALSE"
-    """
     if not HF_TOKEN:
-        return {
-            "verdict": "unavailable",
-            "reasoning": "HuggingFace token not configured",
-            "confidence": 0
-        }
+        return {"verdict": "unavailable", "reasoning": "HF_TOKEN not set", "confidence": 0}
 
-    # Build evidence block with dates
     evidence_parts = []
-    current_date = datetime.now().strftime("%B %Y")
+    today = datetime.now().strftime("%d %B %Y")
+
+    if tavily_summary and len(tavily_summary) > 30:
+        evidence_parts.append(
+            f"[Web Summary — searched today {today}]\n{tavily_summary[:600]}"
+        )
 
     for i, (title, text, pubdate, source) in enumerate(articles[:5]):
-        part = f"[Source {i+1}: {source}]"
+        part = f"[Article {i+1} — {source}]"
         if pubdate:
-            part += f" [Published: {pubdate}]"
+            part += f" [Date: {pubdate}]"
         part += f"\nHeadline: {title}"
         if text and len(text) > 100:
-            part += f"\nContent: {text[:1500]}"
+            part += f"\nContent: {text[:2000]}"
         evidence_parts.append(part)
-
-    if tavily_summary:
-        evidence_parts.insert(
-            0,
-            f"[Web Summary as of {current_date}]\n{tavily_summary}"
-        )
 
     if not evidence_parts:
         return {
             "verdict": "INSUFFICIENT_EVIDENCE",
-            "reasoning": "No articles could be retrieved for analysis",
+            "reasoning": "No articles retrieved",
             "confidence": 0
         }
 
-    evidence_block = "\n\n".join(evidence_parts)
+    evidence = "\n\n".join(evidence_parts)
 
-    prompt = f"""You are TruthLens, a professional AI fact-checker similar to Grok.
-Today's date is: {datetime.now().strftime("%d %B %Y")}
+    prompt = f"""You are TruthLens, a professional AI fact-checker. Today is {today}.
 
-CLAIM TO VERIFY: "{claim}"
+CLAIM: "{claim}"
 
-EVIDENCE FROM NEWS SOURCES:
-{evidence_block}
+EVIDENCE:
+{evidence}
 
-YOUR TASK:
-Read each source carefully. Think step by step:
+Analyse each article carefully:
+- An article about someone being ARRESTED for claiming X means X is FALSE
+- Check if articles are actually about the claim or just mention related words
+- Check publication dates — old articles may not reflect current reality
+- "Tinubu mourns someone" does NOT mean Tinubu is dead
+- "FUT Minna offers law" — check if this is confirmed by the university itself
 
-1. What does each article ACTUALLY say? 
-   - An article saying "person arrested for claiming X" means X is FALSE
-   - An article saying "mourns death of Y" when Y is a different person means the subject is ALIVE
-   - Check publication dates — old articles may be outdated
-
-2. Is there a TIMING issue?
-   - If claim says "2026 results are out" but articles are from 2025, that does not confirm 2026 results
-   - Current date is {datetime.now().strftime("%d %B %Y")} — use this for context
-
-3. What does the OVERALL evidence show?
-   - Do multiple credible sources directly confirm or deny the claim?
-   - Are sources talking about the actual claim or something similar but different?
-
-RESPOND IN THIS EXACT FORMAT:
-REASONING: [Explain what each source actually says and your analysis — be specific]
-VERDICT: [SUPPORTS_CLAIM or CONTRADICTS_CLAIM or INSUFFICIENT_EVIDENCE]
-CONFIDENCE: [HIGH or MEDIUM or LOW]
-EXPLANATION: [One clear sentence for the user explaining the verdict]"""
+RESPOND EXACTLY LIKE THIS:
+REASONING: [what each article actually says, step by step]
+VERDICT: SUPPORTS_CLAIM or CONTRADICTS_CLAIM or INSUFFICIENT_EVIDENCE
+CONFIDENCE: HIGH or MEDIUM or LOW
+EXPLANATION: [one sentence for the user]"""
 
     try:
-        response = requests.post(
+        resp = requests.post(
             "https://api-inference.huggingface.co/models/microsoft/Phi-3.5-mini-instruct/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {HF_TOKEN}",
-                "Content-Type": "application/json"
+                "Content-Type":  "application/json"
             },
             json={
                 "model": "microsoft/Phi-3.5-mini-instruct",
                 "messages": [
                     {
                         "role": "system",
-                        "content": f"You are TruthLens, a professional AI fact-checker. Today is {datetime.now().strftime('%d %B %Y')}. Be precise, analytical and consider article dates carefully."
+                        "content": f"You are TruthLens, a professional fact-checker. Today is {today}. Be precise and analytical."
                     },
                     {"role": "user", "content": prompt}
                 ],
-                "max_tokens": 600,
+                "max_tokens": 700,
                 "temperature": 0.1,
                 "stream": False
             },
-            timeout=45
+            timeout=50
         )
 
-        if response.status_code == 200:
-            raw = response.json()
+        logger.info(f"Phi-3.5 status: {resp.status_code}")
+
+        if resp.status_code == 200:
+            raw  = resp.json()
             if isinstance(raw, dict) and "choices" in raw:
                 text = raw["choices"][0]["message"]["content"]
             elif isinstance(raw, list) and raw:
@@ -600,25 +525,21 @@ EXPLANATION: [One clear sentence for the user explaining the verdict]"""
             else:
                 text = str(raw)
 
-            logger.info(f"Phi-3.5 response: {text[:300]}")
+            logger.info(f"Phi-3.5 raw response: {text[:400]}")
 
-            # Parse structured response
-            v_match   = re.search(
-                r'VERDICT:\s*(SUPPORTS_CLAIM|CONTRADICTS_CLAIM|INSUFFICIENT_EVIDENCE)',
+            v_m = re.search(
+                r'VERDICT[:\s]+(SUPPORTS_CLAIM|CONTRADICTS_CLAIM|INSUFFICIENT_EVIDENCE)',
                 text, re.IGNORECASE
             )
-            r_match   = re.search(
-                r'REASONING:\s*(.*?)(?=VERDICT:|$)', text, re.IGNORECASE | re.DOTALL
-            )
-            c_match   = re.search(r'CONFIDENCE:\s*(HIGH|MEDIUM|LOW)', text, re.IGNORECASE)
-            e_match   = re.search(r'EXPLANATION:\s*(.*?)(?=\n\n|$)', text, re.IGNORECASE | re.DOTALL)
+            r_m = re.search(r'REASONING[:\s]+(.*?)(?=VERDICT:|$)', text, re.IGNORECASE | re.DOTALL)
+            c_m = re.search(r'CONFIDENCE[:\s]+(HIGH|MEDIUM|LOW)', text, re.IGNORECASE)
+            e_m = re.search(r'EXPLANATION[:\s]+(.*?)(?=\n\n|$)', text, re.IGNORECASE | re.DOTALL)
 
-            verdict     = v_match.group(1).upper() if v_match else "INSUFFICIENT_EVIDENCE"
-            reasoning   = r_match.group(1).strip()[:800] if r_match else text[:500]
-            confidence  = c_match.group(1).upper() if c_match else "LOW"
-            explanation = e_match.group(1).strip()[:200] if e_match else reasoning[:150]
-
-            conf_score = {"HIGH": 0.9, "MEDIUM": 0.65, "LOW": 0.4}.get(confidence, 0.4)
+            verdict     = v_m.group(1).upper() if v_m else "INSUFFICIENT_EVIDENCE"
+            reasoning   = r_m.group(1).strip()[:800] if r_m else text[:600]
+            confidence  = c_m.group(1).upper() if c_m else "LOW"
+            explanation = e_m.group(1).strip()[:250] if e_m else reasoning[:150]
+            conf_score  = {"HIGH": 0.9, "MEDIUM": 0.65, "LOW": 0.4}.get(confidence, 0.4)
 
             return {
                 "verdict":     verdict,
@@ -627,46 +548,36 @@ EXPLANATION: [One clear sentence for the user explaining the verdict]"""
                 "confidence":  conf_score,
             }
 
-        elif response.status_code == 503:
-            logger.warning("Phi-3.5 loading — retrying in 20s")
+        elif resp.status_code == 503:
+            logger.warning("Phi-3.5 loading — retry in 20s")
             time.sleep(20)
             return reason_with_phi35(claim, articles, tavily_summary)
         else:
-            err = response.text[:300]
-            logger.error(f"Phi-3.5 error: {response.status_code} — {err}")
+            err = resp.text[:300]
+            logger.error(f"Phi-3.5 {resp.status_code}: {err}")
             return {
-                "verdict": "api_error",
-                "reasoning": f"API error {response.status_code}: {err}",
+                "verdict":   "api_error",
+                "reasoning": f"Phi-3.5 API error {resp.status_code}: {err}",
                 "confidence": 0
             }
 
     except Exception as e:
-        logger.error(f"Phi-3.5 failed: {e}")
+        logger.error(f"Phi-3.5 exception: {e}")
         return {"verdict": "error", "reasoning": str(e), "confidence": 0}
 
 # ══════════════════════════════════════════════════════════════════
-# LAYER 5 — Smart verdict fusion
+# LAYER 5 — Verdict fusion
 # ══════════════════════════════════════════════════════════════════
-def fuse_verdict(
-    claim: str,
-    distilbert: dict,
-    matched: list,
-    phi35: dict,
-    tavily_summary: str
-) -> dict:
-    """
-    Combine all signals. Priority:
-    Phi-3.5 reasoning > Fact-checkers > Source count > DistilBERT
-    """
-    nigerian   = [s for s in matched if s["is_nigerian"]]
-    factcheck  = [s for s in matched if s["is_factchecker"]]
-    total      = len(matched)
-    phi_v      = phi35.get("verdict", "INSUFFICIENT_EVIDENCE")
-    phi_conf   = phi35.get("confidence", 0)
-    phi_exp    = phi35.get("explanation", "")
-    phi_ok     = phi_v not in (
+def fuse_verdict(distilbert: dict, matched: list, phi35: dict) -> dict:
+    nigerian  = [s for s in matched if s["is_nigerian"]]
+    factcheck = [s for s in matched if s["is_factchecker"]]
+    total     = len(matched)
+    phi_v     = phi35.get("verdict", "INSUFFICIENT_EVIDENCE")
+    phi_conf  = phi35.get("confidence", 0)
+    phi_exp   = phi35.get("explanation", "")
+    phi_ok    = phi_v not in (
         "unavailable", "api_error", "error",
-        "insufficient_evidence", "INSUFFICIENT_EVIDENCE"
+        "insufficient_evidence", "INSUFFICIENT_EVIDENCE", ""
     )
 
     fc_fake = [s for s in factcheck if any(
@@ -678,87 +589,71 @@ def fuse_verdict(
         for w in ["true","confirmed","accurate","verified","correct"]
     )]
 
+    # Priority 1 — Fact checkers
     if fc_fake:
-        return {
-            "verdict": "FAKE", "confidence": 99,
-            "title": "Confirmed Misinformation",
-            "subtitle": f"Flagged by {fc_fake[0]['name']}: {fc_fake[0]['title'][:60]}"
-        }
-    if fc_real and phi_v == "SUPPORTS_CLAIM":
-        return {
-            "verdict": "REAL", "confidence": 99,
-            "title": "Fact-Checker + AI Verified",
-            "subtitle": f"Confirmed by {fc_real[0]['name']} — {phi_exp}"
-        }
-    if phi_ok and phi_v == "CONTRADICTS_CLAIM" and phi_conf >= 0.6:
-        return {
-            "verdict": "FAKE", "confidence": 96,
-            "title": "AI Reading Contradicts Claim",
-            "subtitle": f"Phi-3.5 read the full articles: {phi_exp}"
-        }
-    if phi_ok and phi_v == "SUPPORTS_CLAIM" and phi_conf >= 0.6 and total >= 2:
-        return {
-            "verdict": "REAL", "confidence": 96,
-            "title": "Confirmed — AI Read and Verified",
-            "subtitle": f"Phi-3.5 analysed {total} sources: {phi_exp}"
-        }
-    if phi_ok and phi_v == "SUPPORTS_CLAIM" and phi_conf >= 0.6:
-        return {
-            "verdict": "REAL", "confidence": 88,
-            "title": "AI Reading Confirms Claim",
-            "subtitle": phi_exp
-        }
+        return {"verdict":"FAKE","confidence":99,
+                "title":"Confirmed Misinformation",
+                "subtitle":f"Flagged by {fc_fake[0]['name']}: {fc_fake[0]['title'][:60]}"}
+    if fc_real:
+        return {"verdict":"REAL","confidence":99,
+                "title":"Fact-Checker Verified",
+                "subtitle":f"Confirmed by {fc_real[0]['name']}"}
+
+    # Priority 2 — Phi-3.5 reasoning (WINS over source count)
+    if phi_ok and phi_v == "CONTRADICTS_CLAIM" and phi_conf >= 0.5:
+        return {"verdict":"FAKE","confidence":95,
+                "title":"AI Reading Contradicts Claim",
+                "subtitle":f"Phi-3.5 read the articles: {phi_exp}"}
+
+    if phi_ok and phi_v == "SUPPORTS_CLAIM" and phi_conf >= 0.65 and total >= 2:
+        return {"verdict":"REAL","confidence":95,
+                "title":"Confirmed — AI Read and Verified",
+                "subtitle":f"Phi-3.5 confirmed across {total} sources: {phi_exp}"}
+
+    if phi_ok and phi_v == "SUPPORTS_CLAIM" and phi_conf >= 0.65:
+        return {"verdict":"REAL","confidence":85,
+                "title":"AI Reading Confirms Claim",
+                "subtitle":phi_exp}
+
+    # Priority 3 — Source count (only if Phi did not contradict)
     if total >= 3 and phi_v != "CONTRADICTS_CLAIM":
         regions = list(dict.fromkeys(s["region"] for s in matched[:4]))
-        return {
-            "verdict": "REAL", "confidence": 90,
-            "title": "Confirmed by Multiple Outlets",
-            "subtitle": f"Found in {total} credible outlets: {', '.join(regions)}"
-        }
-    if len(nigerian) >= 2:
-        return {
-            "verdict": "REAL", "confidence": 87,
-            "title": "Confirmed by Nigerian Outlets",
-            "subtitle": f"{nigerian[0]['name']} and {nigerian[1]['name']} report this"
-        }
-    if total >= 2:
-        return {
-            "verdict": "REAL", "confidence": 80,
-            "title": "Likely Authentic News",
-            "subtitle": f"Found in {matched[0]['name']} and {matched[1]['name']}"
-        }
+        return {"verdict":"REAL","confidence":85,
+                "title":"Confirmed by Multiple Outlets",
+                "subtitle":f"Found in {total} credible outlets: {', '.join(regions)}"}
+
+    if len(nigerian) >= 2 and phi_v != "CONTRADICTS_CLAIM":
+        return {"verdict":"REAL","confidence":82,
+                "title":"Confirmed by Nigerian Outlets",
+                "subtitle":f"{nigerian[0]['name']} and {nigerian[1]['name']}"}
+
+    if total >= 2 and phi_v != "CONTRADICTS_CLAIM":
+        return {"verdict":"REAL","confidence":75,
+                "title":"Likely Authentic News",
+                "subtitle":f"Found in {matched[0]['name']} and {matched[1]['name']}"}
+
     if total == 1 and phi_v != "CONTRADICTS_CLAIM":
-        return {
-            "verdict": "REAL", "confidence": 63,
-            "title": "Possibly Authentic — Limited Sources",
-            "subtitle": f"Found in 1 outlet: {matched[0]['name']}. Verify further."
-        }
-    if phi_ok and phi_v == "CONTRADICTS_CLAIM":
-        return {
-            "verdict": "FAKE", "confidence": 87,
-            "title": "AI Reading Contradicts Claim",
-            "subtitle": phi_exp
-        }
+        return {"verdict":"REAL","confidence":60,
+                "title":"Possibly Authentic",
+                "subtitle":f"1 outlet: {matched[0]['name']}. Verify further."}
+
+    # Priority 4 — DistilBERT fallback
     if distilbert["prediction"] == 1 and distilbert["confidence"] >= 80:
-        return {
-            "verdict": "FAKE", "confidence": 80,
-            "title": "Likely Fake — AI + No Sources",
-            "subtitle": "Misinformation patterns detected. Zero credible sources found worldwide."
-        }
+        return {"verdict":"FAKE","confidence":78,
+                "title":"Likely Fake — No Sources Found",
+                "subtitle":"Misinformation patterns detected. Zero credible sources found."}
+
     if distilbert["prediction"] == 0 and distilbert["confidence"] >= 80:
-        return {
-            "verdict": "SUSPICIOUS", "confidence": 58,
-            "title": "Suspicious — Cannot Verify",
-            "subtitle": "Writing appears credible but no outlet worldwide confirms this claim."
-        }
-    return {
-        "verdict": "MIXED", "confidence": 50,
-        "title": "Uncertain — Verify Manually",
-        "subtitle": "Mixed signals. Use the fact-checker links below to verify."
-    }
+        return {"verdict":"SUSPICIOUS","confidence":55,
+                "title":"Suspicious — Cannot Verify",
+                "subtitle":"Writing appears credible but no outlet confirms this claim."}
+
+    return {"verdict":"MIXED","confidence":50,
+            "title":"Uncertain — Verify Manually",
+            "subtitle":"Mixed signals. Use the fact-checker links below."}
 
 # ══════════════════════════════════════════════════════════════════
-# API Endpoints
+# Endpoints
 # ══════════════════════════════════════════════════════════════════
 class AnalyseRequest(BaseModel):
     text: str
@@ -766,27 +661,16 @@ class AnalyseRequest(BaseModel):
 @app.get("/")
 def root():
     return {
-        "name": "TruthLens API v7.0",
-        "institution": "National Open University of Nigeria (NOUN)",
-        "developer": "Jabir Muhammad Kabir",
-        "supervisor": "Dr. Ojeniyi Adebayo",
-        "status": "running",
-        "pipeline": [
-            "DistilBERT", "TavilySearch", "GoogleNewsRSS",
-            "JinaReader", "Phi-3.5-mini", "SmartFusion"
-        ],
+        "name":    "TruthLens API v8.0",
+        "status":  "running",
+        "tavily":  bool(TAVILY_KEY),
+        "phi35":   bool(HF_TOKEN),
         "sources": len(SOURCES),
-        "tavily_enabled": bool(TAVILY_KEY),
-        "phi35_enabled":  bool(HF_TOKEN),
     }
 
 @app.get("/health")
 def health():
-    return {
-        "status":  "healthy",
-        "tavily":  bool(TAVILY_KEY),
-        "phi35":   bool(HF_TOKEN),
-    }
+    return {"status":"healthy","tavily":bool(TAVILY_KEY),"phi35":bool(HF_TOKEN)}
 
 @app.get("/stats")
 def stats():
@@ -798,12 +682,12 @@ async def analyse(req: AnalyseRequest):
     if not text or len(text) < 8:
         raise HTTPException(400, "Text too short")
     if len(text) > 8000:
-        raise HTTPException(400, "Text too long — max 8000 characters")
+        raise HTTPException(400, "Text too long")
 
-    clean = re.sub(r'http\S+|www\S+|<.*?>|\s+', ' ', text).strip()[:600]
-    current_year  = datetime.now().year
-    claim_years   = extract_years(clean)
-    future_years  = [y for y in claim_years if y > current_year]
+    clean        = re.sub(r'http\S+|www\S+|<.*?>|\s+', ' ', text).strip()[:600]
+    current_year = datetime.now().year
+    claim_years  = extract_years(clean)
+    future_years = [y for y in claim_years if y > current_year]
 
     if future_years:
         return _future_verdict(future_years[0])
@@ -815,13 +699,13 @@ async def analyse(req: AnalyseRequest):
         cached["from_cache"] = True
         return cached
 
-    tick(cache_hit=False)
+    tick()
 
-    # Layer 1 — DistilBERT
+    # Layer 1
     db = run_distilbert(clean)
     logger.info(f"DistilBERT: {'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}%")
 
-    # Layer 2 — Query expansion + search
+    # Layer 2
     queries = generate_queries(clean)
     results, tavily_summary = search_all(queries)
 
@@ -829,123 +713,105 @@ async def analyse(req: AnalyseRequest):
     matched   = match_sources(clean, results)
     factcheck = [s for s in matched if s["is_factchecker"]]
 
-    # Layer 3 — Read full articles with Jina
+    # Layer 3 — Read articles
     articles_for_phi = []
     for src in matched[:5]:
-        url = src["article_url"]
-        # Use raw_content from Tavily if available (already extracted)
-        if src.get("raw_content") and len(src["raw_content"]) > 200:
-            full_text = src["raw_content"]
-            logger.info(f"Using Tavily content for {src['name']}: {len(full_text)} chars")
+        raw = src.get("raw_content", "")
+        if raw and len(raw) > 200:
+            full_text = raw
         else:
-            # Fall back to Jina reader
+            url = src["article_url"]
             full_text = read_article(url) if url and "news.google.com" not in url else ""
         articles_for_phi.append((
-            src["title"],
-            full_text,
-            src["pubdate"],
-            src["name"]
+            src["title"], full_text, src["pubdate"], src["name"]
         ))
 
-    # Also add high-quality snippets from unmatched results
-    for r in results[:5]:
-        if r.get("raw_content") and len(r["raw_content"]) > 300:
+    # Add Tavily raw content from unmatched results
+    for r in results[:8]:
+        rc = r.get("raw_content", "")
+        if rc and len(rc) > 300:
             title = r.get("title", "")
-            src_name = "Web Source"
-            for src_domain in SOURCES:
-                if src_domain in (r.get("href") or "").lower():
-                    src_name = SOURCES[src_domain]["name"]
-                    break
             if not any(t == title for t, _, _, _ in articles_for_phi):
-                articles_for_phi.append((
-                    title,
-                    r["raw_content"],
-                    r.get("pubdate", ""),
-                    src_name
-                ))
+                src_name = "Web"
+                for sd in SOURCES:
+                    if sd in (r.get("href") or "").lower():
+                        src_name = SOURCES[sd]["name"]
+                        break
+                articles_for_phi.append(
+                    (title, rc, r.get("pubdate",""), src_name)
+                )
 
-    scraped_count = sum(1 for _, t, _, _ in articles_for_phi if len(t) > 200)
+    scraped = sum(1 for _, t, _, _ in articles_for_phi if len(t) > 200)
 
-    # Layer 4 — Phi-3.5 reasoning
+    # Layer 4 — Phi-3.5
     phi35 = reason_with_phi35(clean, articles_for_phi, tavily_summary)
-    logger.info(f"Phi-3.5: {phi35.get('verdict')} conf={phi35.get('confidence')}")
+    logger.info(f"Phi-3.5: verdict={phi35.get('verdict')} conf={phi35.get('confidence')}")
 
-    # Layer 5 — Fuse verdict
-    fusion     = fuse_verdict(clean, db, matched, phi35, tavily_summary)
+    # Layer 5 — Fuse
+    fusion     = fuse_verdict(db, matched, phi35)
     verdict    = fusion["verdict"]
     confidence = fusion["confidence"]
 
     # Signals
     upper     = sum(1 for w in clean.split() if w.isupper() and len(w) > 2)
     excl      = clean.count("!")
-    has_attr  = any(w in clean.lower() for w in
-                ["according to","reported","said","confirmed","announced"])
     clickbait = any(w in clean.lower() for w in
-                ["shocking","secret","exposed","leaked","won't believe",
-                 "they don't want","viral","breaking","must see"])
+                ["shocking","secret","exposed","leaked","won't believe","viral","breaking"])
 
     phi_sig = {
-        "SUPPORTS_CLAIM":        ("Phi-3.5 read articles — SUPPORTS claim",    "pos"),
-        "CONTRADICTS_CLAIM":     ("Phi-3.5 read articles — CONTRADICTS claim", "neg"),
-        "INSUFFICIENT_EVIDENCE": ("Phi-3.5 — insufficient article content",    "neu"),
-    }.get(phi35.get("verdict", ""), ("Phi-3.5 reasoning unavailable", "neu"))
+        "SUPPORTS_CLAIM":        ("Read articles — SUPPORTS claim",       "pos"),
+        "CONTRADICTS_CLAIM":     ("Read articles — CONTRADICTS claim",    "neg"),
+        "INSUFFICIENT_EVIDENCE": ("Insufficient article content",          "neu"),
+    }.get(phi35.get("verdict",""), ("Reasoning unavailable — check HF_TOKEN", "neu"))
 
     signals = [
         {"icon":"🌐","label":"Web Sources",
          "value":f"{len(matched)} credible outlets found",
          "type":"pos" if len(matched)>=2 else "neg" if len(matched)==0 else "neu"},
-        {"icon":"🤖","label":"DistilBERT AI",
+        {"icon":"🤖","label":"DistilBERT",
          "value":f"{'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}%",
          "type":"pos" if db['prediction']==0 else "neg"},
-        {"icon":"🧠","label":"Phi-3.5 Reasoning",
-         "value":phi_sig[0], "type":phi_sig[1]},
+        {"icon":"🧠","label":"Phi-3.5 Reading",
+         "value":phi_sig[0],"type":phi_sig[1]},
         {"icon":"📰","label":"Articles Read",
-         "value":f"{scraped_count} full articles analysed",
-         "type":"pos" if scraped_count>0 else "neu"},
-        {"icon":"😱","label":"Tone Analysis",
-         "value":"Sensationalist" if upper>2 or excl>2 else "Measured tone",
+         "value":f"{scraped} full articles analysed",
+         "type":"pos" if scraped>0 else "neu"},
+        {"icon":"😱","label":"Tone",
+         "value":"Sensationalist" if upper>2 or excl>2 else "Measured",
          "type":"neg" if upper>2 else "pos"},
         {"icon":"🎣","label":"Clickbait",
-         "value":"Clickbait detected" if clickbait else "None detected",
+         "value":"Detected" if clickbait else "None detected",
          "type":"neg" if clickbait else "pos"},
     ]
 
-    phi_reasoning = phi35.get("reasoning", "") or phi35.get("explanation", "")
+    phi_reasoning = phi35.get("reasoning","") or phi35.get("explanation","") or "No reasoning returned"
 
     if verdict == "REAL":
         src_list = ", ".join(s["name"] for s in matched[:3]) if matched else "none"
         analysis = (
             f"This content appears CREDIBLE.\n\n"
-            f"LAYER 1 — DistilBERT: Linguistic patterns scored "
-            f"{'REAL' if db['prediction']==0 else 'FAKE'} at {db['confidence']}% "
-            f"(this is the raw AI score before web verification).\n\n"
-            f"LAYER 2 — WEB SEARCH: Found {len(matched)} credible outlet(s) "
-            f"including {src_list}. Searched via {len(queries)} targeted queries "
-            f"with date-aware Tavily + Google News.\n\n"
-            f"LAYER 3 — PHI-3.5 READING: {phi_reasoning[:400] if phi_reasoning else 'Articles analysed.'}\n\n"
-            f"RECOMMENDATION: Content appears credible. Click the source links below."
+            f"LAYER 1 — DistilBERT: {'REAL' if db['prediction']==0 else 'FAKE'} at {db['confidence']}% "
+            f"(raw AI score before web verification).\n\n"
+            f"LAYER 2 — WEB: Found {len(matched)} outlet(s) including {src_list}. "
+            f"Searched via {len(queries)} queries using Tavily + Google News.\n\n"
+            f"LAYER 3 — PHI-3.5: {phi_reasoning[:500]}\n\n"
+            f"RECOMMENDATION: Content appears credible. Click sources below to verify."
         )
-    elif verdict in ("FAKE", "SUSPICIOUS"):
+    elif verdict in ("FAKE","SUSPICIOUS"):
         analysis = (
             f"This content is LIKELY FAKE OR MISLEADING.\n\n"
-            f"LAYER 1 — DistilBERT: Scored "
-            f"{'REAL' if db['prediction']==0 else 'FAKE'} at {db['confidence']}%.\n\n"
-            f"LAYER 2 — WEB SEARCH: "
-            f"{'Zero credible sources found across 60+ global outlets.' if len(matched)==0 else f'{len(matched)} source(s) found but content contradicts the claim.'} "
-            f"Searched via {len(queries)} targeted queries.\n\n"
-            f"LAYER 3 — PHI-3.5 READING: {phi_reasoning[:400] if phi_reasoning else 'No supporting evidence found in articles.'}\n\n"
+            f"LAYER 1 — DistilBERT: {db['confidence']}% {'REAL' if db['prediction']==0 else 'FAKE'}.\n\n"
+            f"LAYER 2 — WEB: {'Zero credible sources found.' if not matched else f'{len(matched)} sources found but content contradicts the claim.'}\n\n"
+            f"LAYER 3 — PHI-3.5: {phi_reasoning[:500]}\n\n"
             f"RECOMMENDATION: Do not share. Verify through AfricaCheck or Dubawa."
         )
     else:
         analysis = (
-            f"UNCERTAIN RESULT: Mixed signals detected.\n\n"
-            f"This may be very recent breaking news, an opinion piece, "
-            f"satire, or content outside our training domain.\n\n"
-            f"LAYER 1 — DistilBERT: {db['confidence']}% "
-            f"{'REAL' if db['prediction']==0 else 'FAKE'}.\n"
-            f"LAYER 2 — Web: {len(matched)} source(s) found.\n"
-            f"LAYER 3 — Phi-3.5: {phi_reasoning[:200] if phi_reasoning else 'Inconclusive.'}\n\n"
-            f"RECOMMENDATION: Check Google News, AfricaCheck or Dubawa before sharing."
+            f"UNCERTAIN: Mixed signals.\n\n"
+            f"DistilBERT: {db['confidence']}% {'REAL' if db['prediction']==0 else 'FAKE'}. "
+            f"Sources: {len(matched)} found. "
+            f"Phi-3.5: {phi_reasoning[:300]}\n\n"
+            f"RECOMMENDATION: Check AfricaCheck or Dubawa before sharing."
         )
 
     result = {
@@ -958,12 +824,12 @@ async def analyse(req: AnalyseRequest):
         "real_probability": round(db["real"], 4),
         "fake_probability": round(db["fake"], 4),
         "phi3": {
-            "verdict":     phi35.get("verdict", ""),
-            "reasoning":   phi_reasoning[:600],
-            "explanation": phi35.get("explanation", ""),
+            "verdict":     phi35.get("verdict",""),
+            "reasoning":   phi_reasoning,
+            "explanation": phi35.get("explanation",""),
             "confidence":  phi35.get("confidence", 0),
         },
-        "tavily_summary": tavily_summary[:300] if tavily_summary else "",
+        "tavily_summary":   tavily_summary[:300] if tavily_summary else "",
         "sources_found": [
             {
                 "source":         s["source"],
@@ -990,7 +856,7 @@ async def analyse(req: AnalyseRequest):
             for s in factcheck[:3]
         ],
         "queries_used":     queries,
-        "articles_scraped": scraped_count,
+        "articles_scraped": scraped,
         "search_timestamp": datetime.now().isoformat(),
         "from_cache":       False,
         "daily_stats":      COUNTER.copy(),
@@ -1002,27 +868,23 @@ async def analyse(req: AnalyseRequest):
 
 def _future_verdict(year: int) -> dict:
     return {
-        "verdict": "FAKE", "confidence": 99,
-        "verdict_title": "Future Event Claimed as Fact",
-        "verdict_subtitle": f"References {year} which has not happened yet.",
-        "analysis": (
-            f"TEMPORAL CHECK: This content references {year}, a future year. "
-            f"Events that have not occurred cannot be reported as facts.\n\n"
-            f"RECOMMENDATION: Do not share."
-        ),
-        "signals": [
-            {"icon":"📅","label":"Date Check",      "value":f"Future year {year}", "type":"neg"},
-            {"icon":"🚫","label":"Verdict",         "value":"Impossible — future", "type":"neg"},
-            {"icon":"🤖","label":"DistilBERT",      "value":"Temporal check",      "type":"neg"},
-            {"icon":"🧠","label":"Phi-3.5",         "value":"Not needed",          "type":"neg"},
-            {"icon":"🌐","label":"Web Search",      "value":"Not needed",          "type":"neg"},
-            {"icon":"⚠️","label":"Warning",         "value":"Do not share",        "type":"neg"},
+        "verdict":"FAKE","confidence":99,
+        "verdict_title":"Future Event Claimed as Fact",
+        "verdict_subtitle":f"References {year} which has not happened yet.",
+        "analysis":f"This content references {year}, a future year. Cannot be reported as fact.\n\nDo not share.",
+        "signals":[
+            {"icon":"📅","label":"Date","value":f"Future year {year}","type":"neg"},
+            {"icon":"🚫","label":"Verdict","value":"Impossible","type":"neg"},
+            {"icon":"🤖","label":"DistilBERT","value":"N/A","type":"neg"},
+            {"icon":"🧠","label":"Phi-3.5","value":"N/A","type":"neg"},
+            {"icon":"🌐","label":"Web","value":"N/A","type":"neg"},
+            {"icon":"⚠️","label":"Warning","value":"Do not share","type":"neg"},
         ],
-        "real_probability": 0.01, "fake_probability": 0.99,
-        "phi3": {"verdict":"N/A","reasoning":"Future date","confidence":0},
-        "tavily_summary": "",
-        "sources_found": [], "fact_checks": [],
-        "queries_used": [], "articles_scraped": 0,
-        "search_timestamp": datetime.now().isoformat(),
-        "from_cache": False, "daily_stats": {}
+        "real_probability":0.01,"fake_probability":0.99,
+        "phi3":{"verdict":"N/A","reasoning":"Future date","confidence":0},
+        "tavily_summary":"",
+        "sources_found":[],"fact_checks":[],
+        "queries_used":[],"articles_scraped":0,
+        "search_timestamp":datetime.now().isoformat(),
+        "from_cache":False,"daily_stats":{}
     }
