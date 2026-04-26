@@ -569,17 +569,29 @@ function render(d){
   document.getElementById('rp').textContent=d.real_probability!=null?(d.real_probability*100).toFixed(1)+'%':'—';
   document.getElementById('fp').textContent=d.fake_probability!=null?(d.fake_probability*100).toFixed(1)+'%':'—';
 
-  // Phi-3 reasoning panel
+  // Phi-3 reasoning panel — always show
   const phi=d.phi3||{};
-  if(phi.reasoning&&phi.reasoning.length>10){
-    document.getElementById('phi-wrap').style.display='block';
-    const badge=document.getElementById('phi-badge');
-    const pv=phi.verdict||'';
-    if(pv.includes('SUPPORTS')){badge.className='phi-verdict sup';badge.textContent='✅ SUPPORTS CLAIM';}
-    else if(pv.includes('CONTRADICTS')){badge.className='phi-verdict con';badge.textContent='❌ CONTRADICTS CLAIM';}
-    else{badge.className='phi-verdict ins';badge.textContent='⚠️ INSUFFICIENT EVIDENCE';}
-    document.getElementById('phi-text').textContent=phi.reasoning;
-  }else{document.getElementById('phi-wrap').style.display='none';}
+  document.getElementById('phi-wrap').style.display='block';
+  const badge=document.getElementById('phi-badge');
+  const pv=phi.verdict||'';
+  if(pv.includes('SUPPORTS')){
+    badge.className='phi-verdict sup';
+    badge.textContent='✅ SUPPORTS CLAIM — Evidence confirms this is true';
+  } else if(pv.includes('CONTRADICTS')){
+    badge.className='phi-verdict con';
+    badge.textContent='❌ CONTRADICTS CLAIM — Evidence shows this is false';
+  } else if(pv.includes('INSUFFICIENT')){
+    badge.className='phi-verdict ins';
+    badge.textContent='⚠️ INSUFFICIENT EVIDENCE — Could not find enough articles to verify';
+  } else if(pv.includes('error')||pv.includes('api_error')){
+    badge.className='phi-verdict ins';
+    badge.textContent='⚠️ REASONING ERROR — Check HF_TOKEN in Railway';
+  } else {
+    badge.className='phi-verdict ins';
+    badge.textContent='⚠️ REASONING UNAVAILABLE';
+  }
+  const reasoningText = phi.reasoning||phi.explanation||'No reasoning returned from Phi-3.5';
+  document.getElementById('phi-text').textContent=reasoningText;
 
   // Fact checkers
   const fcs=d.fact_checks||[];
