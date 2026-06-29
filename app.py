@@ -24,9 +24,10 @@ logger = logging.getLogger("truthlens")
 MODEL_ID   = os.environ.get("MODEL_ID", "Jabirkabir/truthlens-fakenews-detector")
 HF_TOKEN   = os.environ.get("HF_TOKEN", "")
 TAVILY_KEY = os.environ.get("TAVILY_KEY", "")
+GROQ_KEY   = os.environ.get("GROQ_API_KEY", "")
 
-# LLM for reasoning — Mistral is free on HF Inference API
-LLM_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
+# LLM for reasoning — Groq is fast and free
+LLM_MODEL = "llama3-8b-8192"
 
 app = FastAPI(title="TruthLens API", version="9.0", docs_url=None, redoc_url=None)
 app.add_middleware(
@@ -277,7 +278,6 @@ def search_tavily(query: str, claim_type: str) -> tuple:
         logger.warning("TAVILY_KEY empty — skipping Tavily")
         return [], ""
     try:
-        # For education — search specific authoritative sites
         include_domains = []
         if claim_type == "education":
             include_domains = ["nuc.edu.ng","jamb.gov.ng","myschool.ng","schoolgist.com.ng"]
@@ -466,11 +466,12 @@ def match_sources(claim: str, results: list) -> list:
     return found
 
 # ══════════════════════════════════════════════════════════════════
-# LLM REASONING — Mistral-7B (actually works on HF Inference API)
+# LLM REASONING — Groq (fast, free, reliable)
 # ══════════════════════════════════════════════════════════════════
 def reason_with_llm(claim: str, articles: list, tavily_summary: str, claim_type: str) -> dict:
-    if not HF_TOKEN:
-        return {"verdict":"unavailable","reasoning":"HF_TOKEN not configured","confidence":0}
+    if not GROQ_KEY:
+        logger.warning("GROQ_API_KEY not set — skipping LLM reasoning")
+        return {"verdict":"unavailable","reasoning":"GROQ_API_KEY not configured in Railway Variables","confidence":0,"model_used":"none"}
 
     today = datetime.now().strftime("%d %B %Y")
 
@@ -488,22 +489,22 @@ def reason_with_llm(claim: str, articles: list, tavily_summary: str, claim_type:
         evidence_parts.append(part)
 
     if not evidence_parts:
-        return {"verdict":"INSUFFICIENT_EVIDENCE","reasoning":"No articles found","confidence":0}
+        return {"verdict":"INSUFFICIENT_EVIDENCE","reasoning":"No articles found to analyse","confidence":0,"model_used":"none"}
 
     evidence = "\n\n".join(evidence_parts)
 
     type_guide = {
-        "education": "For education claims: check if university website or NUC/JAMB officially lists this programme. If no official source confirms it, verdict is CONTRADICTS_CLAIM.",
-        "political": "For political claims: check if major news outlets directly report this event. Someone mourning X does not mean X died. Someone arrested for claiming Y means Y is false.",
-        "health":    "For health claims: WHO and CDC are highest authority. Check official statements.",
-        "business":  "For business claims: check CBN, official government sources, and major financial outlets.",
+        "education":     "For education claims: check if university website or NUC/JAMB officially lists this programme. If no official source confirms it, verdict is CONTRADICTS_CLAIM.",
+        "political":     "For political claims: check if major news outlets directly report this event. Someone mourning X does NOT mean X died. Someone arrested for claiming Y means Y is false. Always check if the person is actually confirmed dead by a reliable source before saying SUPPORTS_CLAIM.",
+        "health":        "For health claims: WHO and CDC are highest authority. Check official statements.",
+        "business":      "For business claims: check CBN, official government sources, and major financial outlets.",
         "entertainment": "For entertainment claims: check official announcements, verified artist pages, major entertainment outlets.",
-        "sports":    "For sports claims: check official league/team announcements and major sports outlets.",
-        "science":   "For science claims: check peer-reviewed sources and official research institutions.",
-        "general":   "Check if credible sources directly confirm this specific claim.",
+        "sports":        "For sports claims: check official league/team announcements and major sports outlets.",
+        "science":       "For science claims: check peer-reviewed sources and official research institutions.",
+        "general":       "Check if credible sources directly confirm this specific claim.",
     }.get(claim_type, "Check if credible sources directly confirm this claim.")
 
-    prompt = f"""[INST] You are TruthLens, a professional AI fact-checker. Today is {today}.
+    prompt = f"""You are TruthLens, a professional AI fact-checker. Today is {today}.
 
 CLAIM TO VERIFY: "{claim}"
 CLAIM CATEGORY: {claim_type.upper()}
@@ -515,98 +516,73 @@ EVIDENCE FROM SOURCES:
 
 IMPORTANT RULES:
 1. Read what each source ACTUALLY says — not just keywords
-2. "Person arrested for claiming X" = X is FALSE
-3. "Person mourns Y" does NOT mean person is dead
+2. "Person arrested for claiming X is dead" = X is ALIVE, claim is FALSE
+3. "Person mourns Y" does NOT mean Y is dead — verify directly
 4. Old articles may not reflect current reality
 5. No official university/NUC confirmation = education claim is likely FALSE
 6. Multiple major outlets directly confirming = SUPPORTS_CLAIM
+7. If sources talk ABOUT the claim being false, verdict is CONTRADICTS_CLAIM
+8. Be strict — do not say SUPPORTS_CLAIM unless sources directly confirm it
 
-RESPOND IN THIS EXACT FORMAT:
-REASONING: [explain what each source actually says step by step]
+RESPOND IN THIS EXACT FORMAT (no extra text before or after):
+REASONING: [explain what each source actually says step by step, be specific]
 VERDICT: SUPPORTS_CLAIM or CONTRADICTS_CLAIM or INSUFFICIENT_EVIDENCE
 CONFIDENCE: HIGH or MEDIUM or LOW
-EXPLANATION: [one clear sentence for the user] [/INST]"""
+EXPLANATION: [one clear sentence for the user summarising your finding]"""
 
-    # Try Mistral first — it IS available on HF Inference API
-    models_to_try = [
-        "mistralai/Mistral-7B-Instruct-v0.3",
-        "HuggingFaceH4/zephyr-7b-beta",
-        "microsoft/Phi-3-mini-4k-instruct",
-    ]
+    try:
+        logger.info(f"Calling Groq API with model: {LLM_MODEL}")
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": LLM_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 700,
+                "temperature": 0.1,
+            },
+            timeout=30
+        )
+        logger.info(f"Groq status: {resp.status_code}")
 
-    for model in models_to_try:
-        try:
-            logger.info(f"Trying LLM: {model}")
-            resp = requests.post(
-                f"https://api-inference.huggingface.co/models/{model}",
-                headers={"Authorization": f"Bearer {HF_TOKEN}"},
-                json={
-                    "inputs": prompt,
-                    "parameters": {
-                        "max_new_tokens": 600,
-                        "temperature": 0.1,
-                        "do_sample": False,
-                        "return_full_text": False
-                    }
-                },
-                timeout=45
-            )
-            logger.info(f"LLM {model} status: {resp.status_code}")
+        if resp.status_code == 200:
+            text = resp.json()["choices"][0]["message"]["content"]
+            logger.info(f"Groq response ({len(text)} chars): {text[:300]}")
 
-            if resp.status_code == 200:
-                raw = resp.json()
-                if isinstance(raw, list) and raw:
-                    text = raw[0].get("generated_text", "")
-                elif isinstance(raw, dict):
-                    text = raw.get("generated_text", str(raw))
-                else:
-                    text = str(raw)
+            v_m = re.search(r'VERDICT[:\s]+(SUPPORTS_CLAIM|CONTRADICTS_CLAIM|INSUFFICIENT_EVIDENCE)', text, re.IGNORECASE)
+            r_m = re.search(r'REASONING[:\s]+(.*?)(?=VERDICT:|CONFIDENCE:|$)', text, re.IGNORECASE|re.DOTALL)
+            c_m = re.search(r'CONFIDENCE[:\s]+(HIGH|MEDIUM|LOW)', text, re.IGNORECASE)
+            e_m = re.search(r'EXPLANATION[:\s]+(.*?)(?=\n\n|\Z)', text, re.IGNORECASE|re.DOTALL)
 
-                if len(text) < 20:
-                    logger.warning(f"LLM returned empty response")
-                    continue
+            verdict     = v_m.group(1).upper() if v_m else "INSUFFICIENT_EVIDENCE"
+            reasoning   = r_m.group(1).strip()[:800] if r_m else text[:600]
+            confidence  = c_m.group(1).upper() if c_m else "MEDIUM"
+            explanation = e_m.group(1).strip()[:250] if e_m else reasoning[:150]
+            conf_score  = {"HIGH":0.9,"MEDIUM":0.65,"LOW":0.4}.get(confidence, 0.5)
 
-                logger.info(f"LLM response ({len(text)} chars): {text[:300]}")
+            return {
+                "verdict":     verdict,
+                "reasoning":   reasoning,
+                "explanation": explanation,
+                "confidence":  conf_score,
+                "model_used":  LLM_MODEL
+            }
+        elif resp.status_code == 429:
+            logger.error("Groq rate limit hit")
+            return {"verdict":"INSUFFICIENT_EVIDENCE","reasoning":"Groq rate limit reached. Try again in a moment.","confidence":0,"model_used":"none"}
+        else:
+            logger.error(f"Groq error {resp.status_code}: {resp.text[:200]}")
+            return {"verdict":"INSUFFICIENT_EVIDENCE","reasoning":f"Groq API error: {resp.status_code}","confidence":0,"model_used":"none"}
 
-                v_m = re.search(r'VERDICT[:\s]+(SUPPORTS_CLAIM|CONTRADICTS_CLAIM|INSUFFICIENT_EVIDENCE)', text, re.IGNORECASE)
-                r_m = re.search(r'REASONING[:\s]+(.*?)(?=VERDICT:|CONFIDENCE:|$)', text, re.IGNORECASE|re.DOTALL)
-                c_m = re.search(r'CONFIDENCE[:\s]+(HIGH|MEDIUM|LOW)', text, re.IGNORECASE)
-                e_m = re.search(r'EXPLANATION[:\s]+(.*?)(?=\n\n|\[|$)', text, re.IGNORECASE|re.DOTALL)
-
-                verdict    = v_m.group(1).upper() if v_m else "INSUFFICIENT_EVIDENCE"
-                reasoning  = r_m.group(1).strip()[:800] if r_m else text[:600]
-                confidence = c_m.group(1).upper() if c_m else "MEDIUM"
-                explanation= e_m.group(1).strip()[:250] if e_m else reasoning[:150]
-                conf_score = {"HIGH":0.9,"MEDIUM":0.65,"LOW":0.4}.get(confidence,0.5)
-
-                return {
-                    "verdict":     verdict,
-                    "reasoning":   reasoning,
-                    "explanation": explanation,
-                    "confidence":  conf_score,
-                    "model_used":  model.split("/")[-1]
-                }
-
-            elif resp.status_code == 503:
-                logger.warning(f"{model} loading — trying next")
-                continue
-            else:
-                logger.error(f"{model} returned {resp.status_code}: {resp.text[:150]}")
-                continue
-
-        except Exception as e:
-            logger.error(f"LLM {model} exception: {e}")
-            continue
-
-    return {
-        "verdict": "INSUFFICIENT_EVIDENCE",
-        "reasoning": "All LLM models unavailable. Check HF_TOKEN in Railway Variables and ensure token has Inference API access.",
-        "confidence": 0,
-        "model_used": "none"
-    }
+    except Exception as e:
+        logger.error(f"Groq exception: {e}")
+        return {"verdict":"INSUFFICIENT_EVIDENCE","reasoning":f"Groq request failed: {str(e)}","confidence":0,"model_used":"none"}
 
 # ══════════════════════════════════════════════════════════════════
-# VERDICT FUSION
+# VERDICT FUSION — Fixed logic to prevent false REAL verdicts
 # ══════════════════════════════════════════════════════════════════
 def fuse_verdict(distilbert: dict, matched: list, llm: dict) -> dict:
     nigerian  = [s for s in matched if s["is_nigerian"]]
@@ -620,29 +596,39 @@ def fuse_verdict(distilbert: dict, matched: list, llm: dict) -> dict:
     fc_fake = [s for s in factcheck if any(w in s["title"].lower() for w in ["false","fake","misinformation","misleading","debunked","hoax"])]
     fc_real = [s for s in factcheck if any(w in s["title"].lower() for w in ["true","confirmed","accurate","verified","correct"])]
 
+    # ── Fact-checker signals are highest priority ──
     if fc_fake:
         return {"verdict":"FAKE","confidence":99,"title":"Confirmed Misinformation","subtitle":f"Flagged by {fc_fake[0]['name']}: {fc_fake[0]['title'][:60]}"}
     if fc_real:
         return {"verdict":"REAL","confidence":99,"title":"Fact-Checker Verified","subtitle":f"Confirmed by {fc_real[0]['name']}"}
-    if llm_ok and llm_v=="CONTRADICTS_CLAIM" and llm_conf>=0.5:
-        return {"verdict":"FAKE","confidence":95,"title":"AI Reading Contradicts Claim","subtitle":llm_exp}
-    if llm_ok and llm_v=="SUPPORTS_CLAIM" and llm_conf>=0.6 and total>=2:
+
+    # ── LLM CONTRADICTS overrides source count — fixes "Trump is dead" bug ──
+    if llm_ok and llm_v == "CONTRADICTS_CLAIM" and llm_conf >= 0.4:
+        return {"verdict":"FAKE","confidence":int(llm_conf*100),"title":"AI Reading Contradicts Claim","subtitle":llm_exp or "Sources contradict this claim."}
+
+    # ── LLM SUPPORTS + sources ──
+    if llm_ok and llm_v == "SUPPORTS_CLAIM" and llm_conf >= 0.6 and total >= 2:
         return {"verdict":"REAL","confidence":95,"title":"Confirmed — AI Read and Verified","subtitle":f"AI confirmed across {total} sources: {llm_exp}"}
-    if llm_ok and llm_v=="SUPPORTS_CLAIM" and llm_conf>=0.6:
+    if llm_ok and llm_v == "SUPPORTS_CLAIM" and llm_conf >= 0.6:
         return {"verdict":"REAL","confidence":85,"title":"AI Reading Confirms Claim","subtitle":llm_exp}
-    if total>=3 and llm_v!="CONTRADICTS_CLAIM":
-        regions=list(dict.fromkeys(s["region"] for s in matched[:4]))
-        return {"verdict":"REAL","confidence":85,"title":"Confirmed by Multiple Outlets","subtitle":f"Found in {total} outlets: {', '.join(regions)}"}
-    if len(nigerian)>=2 and llm_v!="CONTRADICTS_CLAIM":
-        return {"verdict":"REAL","confidence":82,"title":"Confirmed by Nigerian Outlets","subtitle":f"{nigerian[0]['name']} and {nigerian[1]['name']}"}
-    if total>=2 and llm_v!="CONTRADICTS_CLAIM":
-        return {"verdict":"REAL","confidence":75,"title":"Likely Authentic News","subtitle":f"Found in {matched[0]['name']} and {matched[1]['name']}"}
-    if total==1 and llm_v!="CONTRADICTS_CLAIM":
-        return {"verdict":"REAL","confidence":60,"title":"Possibly Authentic","subtitle":f"1 outlet: {matched[0]['name']}. Verify further."}
-    if distilbert["prediction"]==1 and distilbert["confidence"]>=80:
-        return {"verdict":"FAKE","confidence":78,"title":"Likely Fake — No Sources","subtitle":"Misinformation patterns + zero credible sources found."}
-    if distilbert["prediction"]==0 and distilbert["confidence"]>=80:
+
+    # ── Source count — only if LLM did NOT contradict ──
+    if total >= 3 and llm_v != "CONTRADICTS_CLAIM":
+        regions = list(dict.fromkeys(s["region"] for s in matched[:4]))
+        return {"verdict":"REAL","confidence":80,"title":"Confirmed by Multiple Outlets","subtitle":f"Found in {total} outlets: {', '.join(regions)}"}
+    if len(nigerian) >= 2 and llm_v != "CONTRADICTS_CLAIM":
+        return {"verdict":"REAL","confidence":78,"title":"Confirmed by Nigerian Outlets","subtitle":f"{nigerian[0]['name']} and {nigerian[1]['name']}"}
+    if total >= 2 and llm_v != "CONTRADICTS_CLAIM":
+        return {"verdict":"REAL","confidence":72,"title":"Likely Authentic News","subtitle":f"Found in {matched[0]['name']} and {matched[1]['name']}"}
+    if total == 1 and llm_v != "CONTRADICTS_CLAIM":
+        return {"verdict":"REAL","confidence":58,"title":"Possibly Authentic","subtitle":f"1 outlet: {matched[0]['name']}. Verify further."}
+
+    # ── No sources — fall back to DistilBERT ──
+    if distilbert["prediction"] == 1 and distilbert["confidence"] >= 80:
+        return {"verdict":"FAKE","confidence":78,"title":"Likely Fake — No Sources Found","subtitle":"Misinformation patterns detected + zero credible sources found."}
+    if distilbert["prediction"] == 0 and distilbert["confidence"] >= 80:
         return {"verdict":"SUSPICIOUS","confidence":55,"title":"Suspicious — Cannot Verify","subtitle":"Writing appears credible but no outlet confirms this."}
+
     return {"verdict":"MIXED","confidence":50,"title":"Uncertain — Verify Manually","subtitle":"Mixed signals. Use the fact-checker links below."}
 
 # ══════════════════════════════════════════════════════════════════
@@ -653,11 +639,18 @@ class AnalyseRequest(BaseModel):
 
 @app.get("/")
 def root():
-    return {"name":"TruthLens API v9.0","status":"running","tavily":bool(TAVILY_KEY),"llm":bool(HF_TOKEN),"llm_model":LLM_MODEL,"sources":len(SOURCES)}
+    return {
+        "name":      "TruthLens API v9.0",
+        "status":    "running",
+        "tavily":    bool(TAVILY_KEY),
+        "llm":       bool(GROQ_KEY),
+        "llm_model": LLM_MODEL,
+        "sources":   len(SOURCES)
+    }
 
 @app.get("/health")
 def health():
-    return {"status":"healthy","tavily":bool(TAVILY_KEY),"llm":bool(HF_TOKEN)}
+    return {"status":"healthy","tavily":bool(TAVILY_KEY),"llm":bool(GROQ_KEY)}
 
 @app.get("/stats")
 def stats():
@@ -666,13 +659,13 @@ def stats():
 @app.post("/analyse")
 async def analyse(req: AnalyseRequest):
     text = req.text.strip()
-    if not text or len(text)<8: raise HTTPException(400,"Text too short")
-    if len(text)>8000: raise HTTPException(400,"Text too long")
+    if not text or len(text) < 8: raise HTTPException(400, "Text too short")
+    if len(text) > 8000:          raise HTTPException(400, "Text too long")
 
-    clean        = re.sub(r'http\S+|www\S+|<.*?>|\s+',' ',text).strip()[:600]
+    clean        = re.sub(r'http\S+|www\S+|<.*?>|\s+',' ', text).strip()[:600]
     current_year = datetime.now().year
     claim_years  = extract_years(clean)
-    future_years = [y for y in claim_years if y>current_year]
+    future_years = [y for y in claim_years if y > current_year]
 
     if future_years:
         return _future_verdict(future_years[0])
@@ -695,18 +688,18 @@ async def analyse(req: AnalyseRequest):
     articles_for_llm = []
     for src in matched[:6]:
         raw = src.get("raw_content","")
-        full_text = raw if raw and len(raw)>200 else read_article(src["article_url"])
-        articles_for_llm.append((src["title"],full_text,src["pubdate"],src["name"]))
+        full_text = raw if raw and len(raw) > 200 else read_article(src["article_url"])
+        articles_for_llm.append((src["title"], full_text, src["pubdate"], src["name"]))
 
     for r in results[:8]:
         rc = r.get("raw_content","")
-        if rc and len(rc)>300:
+        if rc and len(rc) > 300:
             title = r.get("title","")
-            if not any(t==title for t,_,_,_ in articles_for_llm):
-                sn = next((SOURCES[sd]["name"] for sd in SOURCES if sd in (r.get("href") or "").lower()),"Web")
-                articles_for_llm.append((title,rc,r.get("pubdate",""),sn))
+            if not any(t == title for t,_,_,_ in articles_for_llm):
+                sn = next((SOURCES[sd]["name"] for sd in SOURCES if sd in (r.get("href") or "").lower()), "Web")
+                articles_for_llm.append((title, rc, r.get("pubdate",""), sn))
 
-    scraped = sum(1 for _,t,_,_ in articles_for_llm if len(t)>200)
+    scraped = sum(1 for _,t,_,_ in articles_for_llm if len(t) > 200)
 
     llm    = reason_with_llm(clean, articles_for_llm, tavily_summary, claim_type)
     fusion = fuse_verdict(db, matched, llm)
@@ -714,34 +707,45 @@ async def analyse(req: AnalyseRequest):
     confidence = fusion["confidence"]
 
     model_used = llm.get("model_used","unknown")
-    upper     = sum(1 for w in clean.split() if w.isupper() and len(w)>2)
+    upper     = sum(1 for w in clean.split() if w.isupper() and len(w) > 2)
     excl      = clean.count("!")
     clickbait = any(w in clean.lower() for w in ["shocking","secret","exposed","leaked","viral","breaking"])
 
     llm_sig = {
-        "SUPPORTS_CLAIM":        (f"AI read articles — SUPPORTS claim","pos"),
-        "CONTRADICTS_CLAIM":     (f"AI read articles — CONTRADICTS claim","neg"),
-        "INSUFFICIENT_EVIDENCE": ("Insufficient evidence in articles","neu"),
-    }.get(llm.get("verdict",""),("LLM unavailable — check HF_TOKEN","neu"))
+        "SUPPORTS_CLAIM":        (f"AI read articles — SUPPORTS claim", "pos"),
+        "CONTRADICTS_CLAIM":     (f"AI read articles — CONTRADICTS claim", "neg"),
+        "INSUFFICIENT_EVIDENCE": ("Insufficient evidence in articles", "neu"),
+    }.get(llm.get("verdict",""), ("LLM unavailable", "neu"))
 
     signals = [
-        {"icon":"🌐","label":"Web Sources","value":f"{len(matched)} credible outlets","type":"pos" if len(matched)>=2 else "neg" if len(matched)==0 else "neu"},
-        {"icon":"🤖","label":"DistilBERT","value":f"{'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}%","type":"pos" if db['prediction']==0 else "neg"},
-        {"icon":"🧠","label":f"AI Reasoning","value":llm_sig[0],"type":llm_sig[1]},
-        {"icon":"📰","label":"Articles Read","value":f"{scraped} articles analysed","type":"pos" if scraped>0 else "neu"},
-        {"icon":"🎯","label":"Claim Category","value":claim_type.upper(),"type":"neu"},
-        {"icon":"🎣","label":"Clickbait","value":"Detected" if clickbait else "None","type":"neg" if clickbait else "pos"},
+        {"icon":"🌐","label":"Web Sources",     "value":f"{len(matched)} credible outlets",                              "type":"pos" if len(matched)>=2 else "neg" if len(matched)==0 else "neu"},
+        {"icon":"🤖","label":"DistilBERT",      "value":f"{'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}%","type":"pos" if db['prediction']==0 else "neg"},
+        {"icon":"🧠","label":"AI Reasoning",    "value":llm_sig[0],                                                      "type":llm_sig[1]},
+        {"icon":"📰","label":"Articles Read",   "value":f"{scraped} articles analysed",                                  "type":"pos" if scraped>0 else "neu"},
+        {"icon":"🎯","label":"Claim Category",  "value":claim_type.upper(),                                              "type":"neu"},
+        {"icon":"🎣","label":"Clickbait",       "value":"Detected" if clickbait else "None",                             "type":"neg" if clickbait else "pos"},
     ]
 
-    llm_reasoning = llm.get("reasoning","") or llm.get("explanation","") or "No reasoning returned. Check HF_TOKEN in Railway Variables."
+    llm_reasoning = llm.get("reasoning","") or llm.get("explanation","") or "No reasoning returned."
     src_list = ", ".join(s["name"] for s in matched[:3]) if matched else "none"
 
-    if verdict=="REAL":
-        analysis=(f"CREDIBLE — {claim_type.upper()} CLAIM\n\nLAYER 1 — DistilBERT: {'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}% (raw score before web check).\n\nLAYER 2 — WEB SEARCH [{claim_type}]: Found {len(matched)} outlet(s) including {src_list}. Searched via {len(queries)} targeted queries via Tavily + Google News.\n\nLAYER 3 — AI READING ({model_used}): {llm_reasoning[:500]}\n\nRECOMMENDATION: Content appears credible. Click sources to verify.")
+    if verdict == "REAL":
+        analysis = (f"CREDIBLE — {claim_type.upper()} CLAIM\n\n"
+                    f"LAYER 1 — DistilBERT: {'REAL' if db['prediction']==0 else 'FAKE'} {db['confidence']}% (raw score before web check).\n\n"
+                    f"LAYER 2 — WEB SEARCH [{claim_type}]: Found {len(matched)} outlet(s) including {src_list}. "
+                    f"Searched via {len(queries)} targeted queries via Tavily + Google News.\n\n"
+                    f"LAYER 3 — AI READING ({model_used}): {llm_reasoning[:500]}\n\n"
+                    f"RECOMMENDATION: Content appears credible. Click sources to verify.")
     elif verdict in ("FAKE","SUSPICIOUS"):
-        analysis=(f"LIKELY FAKE — {claim_type.upper()} CLAIM\n\nLAYER 1 — DistilBERT: {db['confidence']}% {'REAL' if db['prediction']==0 else 'FAKE'}.\n\nLAYER 2 — WEB SEARCH [{claim_type}]: {'Zero credible sources found.' if not matched else f'{len(matched)} source(s) — content contradicts claim.'}\n\nLAYER 3 — AI READING ({model_used}): {llm_reasoning[:500]}\n\nRECOMMENDATION: Do not share. Verify through AfricaCheck or Dubawa.")
+        analysis = (f"LIKELY FAKE — {claim_type.upper()} CLAIM\n\n"
+                    f"LAYER 1 — DistilBERT: {db['confidence']}% {'REAL' if db['prediction']==0 else 'FAKE'}.\n\n"
+                    f"LAYER 2 — WEB SEARCH [{claim_type}]: {'Zero credible sources found.' if not matched else f'{len(matched)} source(s) — content contradicts claim.'}\n\n"
+                    f"LAYER 3 — AI READING ({model_used}): {llm_reasoning[:500]}\n\n"
+                    f"RECOMMENDATION: Do not share. Verify through AfricaCheck or Dubawa.")
     else:
-        analysis=(f"UNCERTAIN — {claim_type.upper()} CLAIM\n\nDistilBERT: {db['confidence']}%. Sources: {len(matched)}. AI: {llm_reasoning[:300]}\n\nRECOMMENDATION: Check AfricaCheck or Dubawa before sharing.")
+        analysis = (f"UNCERTAIN — {claim_type.upper()} CLAIM\n\n"
+                    f"DistilBERT: {db['confidence']}%. Sources: {len(matched)}. AI: {llm_reasoning[:300]}\n\n"
+                    f"RECOMMENDATION: Check AfricaCheck or Dubawa before sharing.")
 
     result = {
         "verdict":verdict,"confidence":confidence,
@@ -749,11 +753,11 @@ async def analyse(req: AnalyseRequest):
         "analysis":analysis,"signals":signals,
         "real_probability":round(db["real"],4),"fake_probability":round(db["fake"],4),
         "phi3":{
-            "verdict":llm.get("verdict",""),
-            "reasoning":llm_reasoning,
-            "explanation":llm.get("explanation",""),
-            "confidence":llm.get("confidence",0),
-            "model":model_used
+            "verdict":     llm.get("verdict",""),
+            "reasoning":   llm_reasoning,
+            "explanation": llm.get("explanation",""),
+            "confidence":  llm.get("confidence",0),
+            "model":       model_used
         },
         "claim_type":claim_type,
         "tavily_summary":tavily_summary[:300] if tavily_summary else "",
@@ -781,12 +785,12 @@ def _future_verdict(year):
         "verdict_subtitle":f"References {year} which has not happened yet.",
         "analysis":f"This content references {year}, a future year. Cannot be fact.\n\nDo not share.",
         "signals":[
-            {"icon":"📅","label":"Date","value":f"Future year {year}","type":"neg"},
-            {"icon":"🚫","label":"Verdict","value":"Impossible","type":"neg"},
-            {"icon":"🤖","label":"DistilBERT","value":"N/A","type":"neg"},
-            {"icon":"🧠","label":"AI Reading","value":"N/A","type":"neg"},
-            {"icon":"🌐","label":"Web","value":"N/A","type":"neg"},
-            {"icon":"⚠️","label":"Warning","value":"Do not share","type":"neg"},
+            {"icon":"📅","label":"Date",       "value":f"Future year {year}","type":"neg"},
+            {"icon":"🚫","label":"Verdict",    "value":"Impossible",         "type":"neg"},
+            {"icon":"🤖","label":"DistilBERT", "value":"N/A",                "type":"neg"},
+            {"icon":"🧠","label":"AI Reading", "value":"N/A",                "type":"neg"},
+            {"icon":"🌐","label":"Web",        "value":"N/A",                "type":"neg"},
+            {"icon":"⚠️","label":"Warning",   "value":"Do not share",       "type":"neg"},
         ],
         "real_probability":0.01,"fake_probability":0.99,
         "phi3":{"verdict":"N/A","reasoning":"Future date","confidence":0,"model":"none"},
