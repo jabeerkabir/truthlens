@@ -135,7 +135,7 @@ textarea:focus,input[type=url]:focus{border-color:var(--gb);box-shadow:0 0 0 4px
 .rt{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:var(--g);margin-bottom:11px;display:flex;align-items:center;gap:8px}
 .rt::before{content:'';display:inline-block;width:4px;height:16px;background:var(--gb);border-radius:2px;flex-shrink:0}
 
-/* PHI-3 REASONING PANEL */
+/* GROQ REASONING PANEL */
 .phi-panel{background:linear-gradient(135deg,rgba(37,99,235,.04),rgba(37,99,235,.02));border:1.5px solid rgba(37,99,235,.18);border-radius:14px;padding:16px 18px;margin-bottom:20px}
 .phi-title{font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:7px}
 .phi-verdict{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-size:.72rem;font-weight:700;margin-bottom:10px}
@@ -272,15 +272,15 @@ footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
 <section class="hero">
   <div class="ey"><span class="ld"></span>Research Project · NOUN 2025</div>
   <h2>The World's<br/><em>Fact Verification Hub</em></h2>
-  <p>Trusted by journalists and researchers globally. Our pipeline searches the web in real-time, scrapes and <strong>reads full articles</strong>, then uses Phi-3-mini AI to reason and understand what the articles actually say — not just keyword matching.</p>
+  <p>Trusted by journalists and researchers globally. Our pipeline searches the web in real-time, scrapes and <strong>reads full articles</strong>, then uses Groq Llama3 AI to reason and understand what the articles actually say — not just keyword matching.</p>
 </section>
 
 <div class="pipeline">
   <div class="pp">🤖 DistilBERT</div>
-  <div class="pp">🔍 DuckDuckGo</div>
+  <div class="pp">🔍 Tavily Search</div>
   <div class="pp">📰 Google News</div>
   <div class="pp">📄 Article Scraping</div>
-  <div class="pp">🧠 Phi-3 Reasoning</div>
+  <div class="pp">🧠 Groq Llama3 Reasoning</div>
   <div class="pp">⚖️ Smart Fusion</div>
 </div>
 
@@ -317,7 +317,7 @@ footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
 
 <div class="disc">
   <span>⚠️</span>
-  <span><strong>Journalist Note:</strong> TruthLens uses AI + real-time web search + article reading + LLM reasoning. Always corroborate with primary sources and editorial judgement.</span>
+  <span><strong>Journalist Note:</strong> TruthLens uses AI + real-time web search + article reading + Groq Llama3 reasoning. Always corroborate with primary sources and editorial judgement.</span>
 </div>
 
 <div id="loading">
@@ -330,9 +330,9 @@ footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
   <ul class="steps" id="steps">
     <li id="s1"><div class="sic">→</div>DistilBERT linguistic analysis</li>
     <li id="s2"><div class="sic">→</div>Generating search queries</li>
-    <li id="s3"><div class="sic">→</div>DuckDuckGo + Google News search</li>
+    <li id="s3"><div class="sic">→</div>Tavily + Google News search</li>
     <li id="s4"><div class="sic">→</div>Scraping full article text</li>
-    <li id="s5"><div class="sic">→</div>Phi-3 reading and reasoning</li>
+    <li id="s5"><div class="sic">→</div>Groq Llama3 reading and reasoning</li>
     <li id="s6"><div class="sic">→</div>Generating final verdict</li>
   </ul>
 </div>
@@ -368,13 +368,14 @@ footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
     </div>
 
     <div style="font-size:.72rem;color:var(--mu);background:var(--soft);padding:9px 13px;border-radius:9px;margin-bottom:18px;margin-top:-8px;line-height:1.5">
-      ⚠️ <strong>Note:</strong> These scores are the raw DistilBERT AI model output only — before web search, article reading and Phi-3 reasoning. The <strong>final verdict above</strong> combines all 6 layers and is the accurate result.
+      ⚠️ <strong>Note:</strong> These scores are the raw DistilBERT AI model output only — before web search, article reading and Groq Llama3 reasoning. The <strong>final verdict above</strong> combines all 6 layers and is the accurate result.
     </div>
-    <!-- PHI-3 REASONING -->
+
+    <!-- GROQ LLAMA3 REASONING -->
     <div id="phi-wrap" style="display:none">
-      <h4 class="rt">🧠 Phi-3 AI Reading & Reasoning</h4>
+      <h4 class="rt">🧠 Groq Llama3 AI Reading &amp; Reasoning</h4>
       <div class="phi-panel">
-        <div class="phi-title">🧠 Phi-3.5-mini Read the Articles and Reasoned:</div>
+        <div class="phi-title">🧠 Groq Llama3 Read the Articles and Reasoned:</div>
         <div class="phi-verdict" id="phi-badge">—</div>
         <div class="phi-reasoning" id="phi-text">—</div>
       </div>
@@ -432,7 +433,7 @@ footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
 </div>
 
 <div class="inforow">
-  <div class="ic2"><span class="ico">🧠</span><h4>Reads Full Articles</h4><p>Phi-3-mini AI scrapes and reads entire articles — not just headlines — then reasons about what they actually mean.</p></div>
+  <div class="ic2"><span class="ico">🧠</span><h4>Reads Full Articles</h4><p>Groq Llama3 AI scrapes and reads entire articles — not just headlines — then reasons about what they actually mean.</p></div>
   <div class="ic2"><span class="ico">🌍</span><h4>Global Coverage</h4><p>Monitors 60+ outlets across Nigeria, Africa, Asia, Europe and Americas including 8 dedicated fact-checkers.</p></div>
   <div class="ic2"><span class="ico">🎓</span><h4>NOUN Research</h4><p>Built as postgraduate research at the National Open University of Nigeria — open and free for the world.</p></div>
 </div>
@@ -450,10 +451,8 @@ footer .fc{font-size:.68rem;color:rgba(255,255,255,.36)}
 <div class="toast" id="toast"></div>
 
 <script>
-// ── UPDATE THIS AFTER RAILWAY DEPLOYMENT ──
-const API = 'https://jabirkabir-truthlens-api.hf.space';
-// Change to your Railway URL e.g:
-// const API = 'https://truthlens-production.up.railway.app';
+// ── UPDATE THIS TO YOUR RAILWAY URL ──
+const API = 'https://truthlens-production-25d8.up.railway.app';
 
 const SID = ['s1','s2','s3','s4','s5','s6'];
 const SDEL = [600,1200,2800,4500,6500,8200];
@@ -519,11 +518,11 @@ async function analyse(){
     apiData={
       verdict:'MIXED',confidence:50,verdict_title:'Connection Error',
       verdict_subtitle:'Could not reach TruthLens API.',
-      analysis:`Unable to connect.\n\n1. The server may be starting up — wait 30 seconds and try again.\n2. Check your internet connection.`,
+      analysis:`Unable to connect.\n\n1. The server may be starting up — wait 30 seconds and try again.\n2. Check your internet connection.\n3. Make sure your Railway URL is set correctly in the HTML.`,
       signals:[
         {icon:'🌐',label:'Connection',value:'API unreachable',type:'neg'},
         {icon:'🤖',label:'DistilBERT',value:'N/A',type:'neu'},
-        {icon:'🧠',label:'Phi-3',value:'N/A',type:'neu'},
+        {icon:'🧠',label:'Groq Llama3',value:'N/A',type:'neu'},
         {icon:'📰',label:'Articles',value:'N/A',type:'neu'},
         {icon:'😱',label:'Tone',value:'N/A',type:'neu'},
         {icon:'🎣',label:'Clickbait',value:'N/A',type:'neu'},
@@ -552,7 +551,7 @@ function render(d){
   document.getElementById('vs').textContent=d.verdict_subtitle||'';
 
   const lbs=document.getElementById('lbs');lbs.innerHTML='';
-  ['DistilBERT','DuckDuckGo','Article Scraping','Phi-3 Reasoning'].forEach(l=>{
+  ['DistilBERT','Tavily + Google News','Article Scraping','Groq Llama3 Reasoning'].forEach(l=>{
     const b=document.createElement('span');b.className='lb';b.textContent='✓ '+l;lbs.appendChild(b);
   });
 
@@ -569,7 +568,7 @@ function render(d){
   document.getElementById('rp').textContent=d.real_probability!=null?(d.real_probability*100).toFixed(1)+'%':'—';
   document.getElementById('fp').textContent=d.fake_probability!=null?(d.fake_probability*100).toFixed(1)+'%':'—';
 
-  // Phi-3 reasoning panel — always show
+  // Groq Llama3 reasoning panel
   const phi=d.phi3||{};
   document.getElementById('phi-wrap').style.display='block';
   const badge=document.getElementById('phi-badge');
@@ -585,12 +584,12 @@ function render(d){
     badge.textContent='⚠️ INSUFFICIENT EVIDENCE — Could not find enough articles to verify';
   } else if(pv.includes('error')||pv.includes('api_error')){
     badge.className='phi-verdict ins';
-    badge.textContent='⚠️ REASONING ERROR — Check HF_TOKEN in Railway';
+    badge.textContent='⚠️ REASONING ERROR — Check GROQ_API_KEY in Railway Variables';
   } else {
     badge.className='phi-verdict ins';
     badge.textContent='⚠️ REASONING UNAVAILABLE';
   }
-  const reasoningText = phi.reasoning||phi.explanation||'No reasoning returned from Phi-3.5';
+  const reasoningText = phi.reasoning||phi.explanation||'No reasoning returned from Groq Llama3.';
   document.getElementById('phi-text').textContent=reasoningText;
 
   // Fact checkers
