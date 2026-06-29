@@ -27,7 +27,7 @@ TAVILY_KEY = os.environ.get("TAVILY_KEY", "")
 GROQ_KEY   = os.environ.get("GROQ_API_KEY", "")
 
 # LLM for reasoning — Groq is fast and free
-LLM_MODEL = "llama3-8b-8192"
+LLM_MODEL = "llama-3.1-8b-instant"
 
 app = FastAPI(title="TruthLens API", version="9.0", docs_url=None, redoc_url=None)
 app.add_middleware(
